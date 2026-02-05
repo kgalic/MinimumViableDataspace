@@ -27,6 +27,10 @@ dependencies {
         // this will remove the RemoteDataPlaneSelectorService
         exclude(group = "org.eclipse.edc", "data-plane-selector-client")
     }
+
+    // Enables EDR store / EDR management support (required for pull/HttpProxy flows)
+    runtimeOnly(libs.edc.core.edrstore)
+
 }
 
 tasks.shadowJar {

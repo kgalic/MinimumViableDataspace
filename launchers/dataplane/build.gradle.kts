@@ -22,6 +22,10 @@ dependencies {
     runtimeOnly(libs.edc.bom.dataplane)
     runtimeOnly(libs.edc.dataplane.v2)
 
+    runtimeOnly(libs.edc.dataplane.http)
+
+    // OPC UA data plane extension
+    runtimeOnly(project(":extensions:opcua"))
     if (project.properties.getOrDefault("persistence", "false") == "true") {
         runtimeOnly(libs.edc.vault.hashicorp)
         runtimeOnly(libs.edc.bom.dataplane.sql)

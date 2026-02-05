@@ -42,37 +42,43 @@ API_KEY="c3VwZXItdXNlcg==.c3VwZXItc2VjcmV0LWtleQo="
 echo
 echo
 echo "Create consumer participant context in IdentityHub"
-PEM_CONSUMER=$(sed -E ':a;N;$!ba;s/\r{0,1}\n/\\n/g' deployment/assets/consumer_public.pem)
-DATA_CONSUMER=$(jq -n --arg pem "$PEM_CONSUMER" '{
-           "roles":[],
-           "serviceEndpoints":[
-             {
-                "type": "CredentialService",
-                "serviceEndpoint": "http://localhost:7081/api/credentials/v1/participants/ZGlkOndlYjpsb2NhbGhvc3QlM0E3MDgz",
-                "id": "consumer-credentialservice-1"
-             },
-             {
-                "type": "ProtocolEndpoint",
-                "serviceEndpoint": "http://localhost:8082/api/dsp",
-                "id": "consumer-dsp"
-             }
-           ],
-           "active": true,
-           "participantId": "did:web:localhost%3A7083",
-           "did": "did:web:localhost%3A7083",
-           "key":{
-               "keyId": "did:web:localhost%3A7083#key-1",
-               "privateKeyAlias": "key-1",
-               "publicKeyPem":"\($pem)"
-           }
-       }')
+PEM_CONSUMER=$(awk '{ sub(/\r$/, ""); printf "%s\\n", $0 }' deployment/assets/consumer_public.pem)
+
+DATA_CONSUMER=$(jq -n '{
+  "roles":[],
+  "serviceEndpoints":[
+    {
+      "type":"CredentialService",
+      "serviceEndpoint":"http://localhost:7081/api/credentials/v1/participants/ZGlkOndlYjpsb2NhbGhvc3QlM0E3MDgz",
+      "id":"consumer-credentialservice-1"
+    },
+    {
+      "type":"ProtocolEndpoint",
+      "serviceEndpoint":"http://localhost:8082/api/dsp",
+      "id":"consumer-dsp"
+    }
+  ],
+  "active":true,
+  "participantId":"did:web:localhost%3A7083",
+  "did":"did:web:localhost%3A7083",
+  "key":{
+    "keyId":"did:web:localhost%3A7083#key-1",
+    "privateKeyAlias":"key-1",
+    "keyGeneratorParams":{
+      "algorithm":"EdDSA"
+    }
+  }
+}')
+
 
 # the consumer runtime will need to have the client_secret in its vault as well, so we store it in a variable
 # and use the Secrets API (part of Management API) to insert it.
-clientSecret=$(curl -s --location 'http://localhost:7082/api/identity/v1alpha/participants/' \
---header 'Content-Type: application/json' \
---header "x-api-key: $API_KEY" \
---data "$DATA_CONSUMER" | jq -r '.clientSecret')
+resp=$(curl -sS --fail --location 'http://localhost:7082/api/identity/v1alpha/participants/' \
+  --header 'Content-Type: application/json' \
+  --header "x-api-key: $API_KEY" \
+  --data "$DATA_CONSUMER")
+
+clientSecret=$(printf '%s' "$resp" | jq -er '.clientSecret')
 
 # add client secret to the consumer runtime
 SECRETS_DATA=$(jq -n --arg secret "$clientSecret" \
@@ -91,37 +97,42 @@ curl -sL -X POST http://localhost:8081/api/management/v3/secrets -H "x-api-key: 
 echo
 echo
 echo "Create provider participant context in IdentityHub"
-PEM_PROVIDER=$(sed -E ':a;N;$!ba;s/\r{0,1}\n/\\n/g' deployment/assets/provider_public.pem)
-DATA_PROVIDER=$(jq -n --arg pem "$PEM_PROVIDER" '{
-            "roles":[],
-            "serviceEndpoints":[
-              {
-                 "type": "CredentialService",
-                 "serviceEndpoint": "http://localhost:7091/api/credentials/v1/participants/ZGlkOndlYjpsb2NhbGhvc3QlM0E3MDkz",
-                 "id": "provider-credentialservice-1"
-              },
-              {
-                "type": "ProtocolEndpoint",
-                "serviceEndpoint": "http://localhost:8092/api/dsp",
-                "id": "provider-catalogserver-dsp"
-              }
-            ],
-            "active": true,
-            "participantId": "did:web:localhost%3A7093",
-            "did": "did:web:localhost%3A7093",
-            "key":{
-                "keyId": "did:web:localhost%3A7093#key-1",
-                "privateKeyAlias": "key-1",
-                "publicKeyPem":"\($pem)"
-            }
-      }')
+PEM_PROVIDER=$(awk '{ sub(/\r$/, ""); printf "%s\\n", $0 }' deployment/assets/provider_public.pem)
+DATA_PROVIDER=$(jq -n '{
+  "roles":[],
+  "serviceEndpoints":[
+    {
+      "type":"CredentialService",
+      "serviceEndpoint":"http://localhost:7091/api/credentials/v1/participants/ZGlkOndlYjpsb2NhbGhvc3QlM0E3MDkz",
+      "id":"provider-credentialservice-1"
+    },
+    {
+      "type":"ProtocolEndpoint",
+      "serviceEndpoint":"http://localhost:8092/api/dsp",
+      "id":"provider-catalogserver-dsp"
+    }
+  ],
+  "active":true,
+  "participantId":"did:web:localhost%3A7093",
+  "did":"did:web:localhost%3A7093",
+  "key":{
+    "keyId":"did:web:localhost%3A7093#key-1",
+    "privateKeyAlias":"key-1",
+    "keyGeneratorParams":{
+      "algorithm":"EdDSA"
+    }
+  }
+}')
+
 
 # the provider runtime will need to have the client_secret in its vault as well, so we store it in a variable
 # and use the Secrets API (part of Management API) to insert it.
-clientSecret=$(curl -s --location 'http://localhost:7092/api/identity/v1alpha/participants/' \
---header 'Content-Type: application/json' \
---header "x-api-key: $API_KEY" \
---data "$DATA_PROVIDER" | jq -r '.clientSecret')
+resp=$(curl -sS --fail --location 'http://localhost:7092/api/identity/v1alpha/participants/' \
+  --header 'Content-Type: application/json' \
+  --header "x-api-key: $API_KEY" \
+  --data "$DATA_PROVIDER")
+
+clientSecret=$(printf '%s' "$resp" | jq -er '.clientSecret')
 
 # add client secret to the provider runtimes
 SECRETS_DATA=$(jq -n --arg secret "$clientSecret" \
@@ -145,7 +156,7 @@ curl -sL -X POST http://localhost:8291/api/management/v3/secrets -H "x-api-key: 
 echo
 echo
 echo "Create dataspace issuer"
-PEM_ISSUER=$(sed -E ':a;N;$!ba;s/\r{0,1}\n/\\n/g' deployment/assets/issuer_public.pem)
+PEM_ISSUER=$(awk '{ sub(/\r$/, ""); printf "%s\\n", $0 }' deployment/assets/issuer_public.pem)
 DATA_ISSUER=$(jq -n --arg pem "$PEM_ISSUER" '{
             "roles":["admin"],
             "serviceEndpoints":[
