@@ -30,6 +30,7 @@ include(":extensions:catalog-node-resolver")
 include(":extensions:dcp-impl")
 include(":extensions:superuser-seed")
 include(":extensions:opcua")
+include(":extensions:opcua-via-mqtt")
 //include(":tests:performance")
 include(":tests:end2end")
 
