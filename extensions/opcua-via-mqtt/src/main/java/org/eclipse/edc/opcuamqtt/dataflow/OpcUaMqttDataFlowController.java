@@ -83,7 +83,7 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
 
     @Override
     public Set<String> transferTypesFor(@NotNull Asset asset) {
-        return Set.of("MQTT-PUSH");
+        return Set.of(OPCUAMQTT_TYPE);
     }
 
     /**

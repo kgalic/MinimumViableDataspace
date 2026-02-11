@@ -7,8 +7,10 @@ dependencies {
     implementation(libs.edc.boot)
     implementation(libs.edc.core.runtime)
 
-    // OPC UA and Transfer SPI for DataFlow support
-    implementation(project(":extensions:opcua"))
+    // OPC UA client - Milo SDK (self-contained, no opcua extension dependency)
+    implementation(libs.milo.sdk.client)
+
+    // Transfer SPI for DataFlow support
     implementation("org.eclipse.edc:transfer-spi:0.9.0")
     implementation("org.eclipse.edc:web-spi:0.9.0")
     runtimeOnly("org.eclipse.edc:jetty-core:0.9.0")

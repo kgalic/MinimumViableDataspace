@@ -23,6 +23,7 @@ dependencies {
     runtimeOnly(project(":extensions:dcp-impl")) // some patches/impls for DCP
     runtimeOnly(project(":extensions:catalog-node-resolver")) // to trigger the federated catalog
     runtimeOnly(project(":extensions:opcua")) // OPC UA client/metadata support
+    runtimeOnly(project(":extensions:opcua-via-mqtt")) // OPC UA via MQTT dataflow support
     runtimeOnly(libs.edc.bom.controlplane)
     runtimeOnly(libs.edc.api.secrets)
 

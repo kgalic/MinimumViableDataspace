@@ -26,6 +26,7 @@ dependencies {
 
     // OPC UA data plane extension
     runtimeOnly(project(":extensions:opcua"))
+    runtimeOnly(project(":extensions:opcua-via-mqtt")) // OPC UA via MQTT support in dataplane
     if (project.properties.getOrDefault("persistence", "false") == "true") {
         runtimeOnly(libs.edc.vault.hashicorp)
         runtimeOnly(libs.edc.bom.dataplane.sql)

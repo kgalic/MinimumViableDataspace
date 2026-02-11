@@ -1,7 +1,7 @@
 package org.eclipse.edc.opcuamqtt.mqttpush;
 
-import org.eclipse.edc.opcua.client.OpcUaClientService;
 import org.eclipse.edc.opcuamqtt.client.OpcUaMqttClient;
+import org.eclipse.edc.opcuamqtt.opcua.MqttOpcUaClient;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.types.domain.DataAddress;
 
@@ -37,14 +37,14 @@ public class OpcUaMqttPushServiceImpl implements OpcUaMqttPushService {
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
 
-    private final OpcUaClientService opcUaClientService;
+    private final MqttOpcUaClient opcUaClient;
     private final OpcUaMqttClient mqttClient;
     private final MqttBrokerConfig brokerConfig;
     private final Monitor monitor;
 
-    public OpcUaMqttPushServiceImpl(OpcUaClientService opcUaClientService, OpcUaMqttClient mqttClient,
+    public OpcUaMqttPushServiceImpl(MqttOpcUaClient opcUaClient, OpcUaMqttClient mqttClient,
                                     MqttBrokerConfig brokerConfig, Monitor monitor) {
-        this.opcUaClientService = opcUaClientService;
+        this.opcUaClient = opcUaClient;
         this.mqttClient = mqttClient;
         this.brokerConfig = brokerConfig;
         this.monitor = monitor;
@@ -59,10 +59,14 @@ public class OpcUaMqttPushServiceImpl implements OpcUaMqttPushService {
         }
 
         // Check if broker is configured
+        monitor.debug("Checking broker configuration for transfer " + transferId + ": " + brokerConfig);
         if (!brokerConfig.isConfigured()) {
-            monitor.severe("MQTT broker not configured for transfer " + transferId);
+            monitor.severe("MQTT broker not configured for transfer " + transferId + ". brokerUrl: " +
+                    (brokerConfig.getBrokerUrl() != null ? brokerConfig.getBrokerUrl() : "null"));
             return;
         }
+
+        monitor.debug("Broker is configured. Starting push for transfer " + transferId + " to asset " + assetId);
 
         // Track transfer -> asset mapping
         transferToAssetMapping.put(transferId, assetId);
@@ -141,7 +145,7 @@ public class OpcUaMqttPushServiceImpl implements OpcUaMqttPushService {
 
         if (nodeIds.size() == 1) {
             // Single node - return simple format
-            Object value = opcUaClientService.readValue(serverUrl, nodeIds.get(0));
+            Object value = opcUaClient.readValue(serverUrl, nodeIds.get(0));
             return formatOpcUaValue(nodeIds.get(0), value, timestamp, assetId);
         } else {
             // Multiple nodes - return array format
@@ -151,7 +155,7 @@ public class OpcUaMqttPushServiceImpl implements OpcUaMqttPushService {
             for (int i = 0; i < nodeIds.size(); i++) {
                 if (i > 0) sb.append(",");
                 try {
-                    Object value = opcUaClientService.readValue(serverUrl, nodeIds.get(i));
+                    Object value = opcUaClient.readValue(serverUrl, nodeIds.get(i));
                     sb.append("{\"nodeId\":\"").append(escapeJson(nodeIds.get(i))).append("\",\"value\":").append(formatJsonValue(value)).append("}");
                 } catch (Exception e) {
                     monitor.warning("Failed to read node " + nodeIds.get(i) + " for asset " + assetId, e);
