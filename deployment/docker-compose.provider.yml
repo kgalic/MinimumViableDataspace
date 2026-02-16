@@ -1,0 +1,62 @@
+services:
+  identityhub-provider:
+    build:
+      context: ..
+      dockerfile: launchers/identity-hub/Dockerfile
+    env_file:
+      - ./assets/env/provider_identityhub.env
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      # Mount assets so relative paths in env files (deployment/assets/...) resolve inside /app
+      - ./assets:/app/deployment/assets:ro
+    network_mode: host
+    restart: unless-stopped
+
+  provider-catalog-server:
+    build:
+      context: ..
+      dockerfile: launchers/catalog-server/Dockerfile
+    env_file:
+      - ./assets/env/provider_catalogserver.env
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - ./assets:/app/deployment/assets:ro
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      - identityhub-provider
+
+  provider-connector-qna:
+    build:
+      context: ..
+      dockerfile: launchers/runtime-embedded/Dockerfile
+    # Uses runtime-embedded launcher
+    env_file:
+      - ./assets/env/provider_connector_qna.env
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - ./assets:/app/deployment/assets:ro
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      - identityhub-provider
+      - provider-catalog-server
+
+  provider-connector-manufacturing:
+    build:
+      context: ..
+      dockerfile: launchers/runtime-embedded/Dockerfile
+    env_file:
+      - ./assets/env/provider_connector_manufacturing.env
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - ./assets:/app/deployment/assets:ro
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      - identityhub-provider
+      - provider-catalog-server

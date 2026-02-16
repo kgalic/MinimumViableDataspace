@@ -1,0 +1,28 @@
+services:
+  identityhub-consumer:
+    build:
+      context: ..
+      dockerfile: launchers/identity-hub/Dockerfile
+    env_file:
+      - ./assets/env/consumer_identityhub.env
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - ./assets:/app/deployment/assets:ro
+    network_mode: host
+    restart: unless-stopped
+
+  consumer-connector:
+    build:
+      context: ..
+      dockerfile: launchers/runtime-embedded/Dockerfile
+    env_file:
+      - ./assets/env/consumer_connector.env
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - ./assets:/app/deployment/assets:ro
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      - identityhub-consumer

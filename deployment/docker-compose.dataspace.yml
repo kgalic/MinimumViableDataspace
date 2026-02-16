@@ -1,0 +1,122 @@
+# Ports used by this dataspace (host network), aligned with Postman collections/environments:
+# - Consumer Identity Hub: 7080 (api), 7081 (credentials), 7082 (identity), 7083 (did), 7085 (version), 7086 (sts)
+# - Provider Identity Hub: 7090-7096 (mirrors consumer; DID on 7093)
+# - Consumer Connector: 8081 (management), 8082 (dsp), 8083 (control), 8084 (catalog), 8085 (version), 11001 (public)
+# - Provider QnA Connector: 8191 (management), 8192 (dsp), 8193 (control), 8194 (catalog), 8195 (version), 12001 (public)
+# - Provider Manufacturing Connector: 8291 (management), 8292 (dsp), 8293 (control), 8294 (catalog), 8295 (version), 13001 (public)
+# - Provider Catalog Server: 8092 (dsp)
+# - Issuer Service: 10013 (admin), 10100 (DID)
+#
+# Local vs Remote usage:
+# - Locally: use localhost with the ports above.
+# - Remotely: point Postman environment variables (e.g., HOST/CONSUMER_HOST/PROVIDER_DSP_URL/CATALOG_SERVER_DSP_URL)
+#   to http://<remote-host>:<port>. Host networking exposes the services on the host interface.
+
+services:
+  # Identity Hubs
+  identityhub-consumer:
+    build:
+      context: ..
+      dockerfile: launchers/identity-hub/Dockerfile
+    env_file:
+      - ./assets/env/consumer_identityhub.env
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - ./assets:/app/deployment/assets:ro
+    network_mode: host
+    restart: unless-stopped
+
+  identityhub-provider:
+    build:
+      context: ..
+      dockerfile: launchers/identity-hub/Dockerfile
+    env_file:
+      - ./assets/env/provider_identityhub.env
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - ./assets:/app/deployment/assets:ro
+    network_mode: host
+    restart: unless-stopped
+
+  # Issuer Service
+  issuer-service:
+    build:
+      context: ..
+      dockerfile: launchers/issuerservice/Dockerfile
+    env_file:
+      - ./assets/env/issuerservice.env
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - ./assets:/app/deployment/assets:ro
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      - identityhub-consumer
+
+
+  # Provider-side services
+  provider-catalog-server:
+    build:
+      context: ..
+      dockerfile: launchers/catalog-server/Dockerfile
+    env_file:
+      - ./assets/env/provider_catalogserver.env
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - ./assets:/app/deployment/assets:ro
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      - identityhub-provider
+
+  provider-connector-qna:
+    build:
+      context: ..
+      dockerfile: launchers/runtime-embedded/Dockerfile
+    env_file:
+      - ./assets/env/provider_connector_qna.env
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - ./assets:/app/deployment/assets:ro
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      - identityhub-provider
+      - provider-catalog-server
+
+  provider-connector-manufacturing:
+    build:
+      context: ..
+      dockerfile: launchers/runtime-embedded/Dockerfile
+    env_file:
+      - ./assets/env/provider_connector_manufacturing.env
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - ./assets:/app/deployment/assets:ro
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      - identityhub-provider
+      - provider-catalog-server
+
+  # Consumer-side connector
+  consumer-connector:
+    build:
+      context: ..
+      dockerfile: launchers/runtime-embedded/Dockerfile
+    env_file:
+      - ./assets/env/consumer_connector.env
+    environment:
+      - LOG_LEVEL=debug
+    volumes:
+      - ./assets:/app/deployment/assets:ro
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      - identityhub-consumer
