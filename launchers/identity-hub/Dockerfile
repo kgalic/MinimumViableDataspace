@@ -48,7 +48,7 @@ COPY --from=build /workspace/launchers/identity-hub/build/install/identity-hub /
 # Copy wrapper script
 COPY launchers/identity-hub/run.sh /app/run.sh
 COPY deployment /app/deployment
-RUN chmod +x /app/run.sh
+RUN chmod +x /app/run.sh && cat /app/run.sh | head -1
 
 # Keep working dir as /app so relative paths in env files like deployment/assets/... resolve
 ENTRYPOINT ["/app/run.sh"]

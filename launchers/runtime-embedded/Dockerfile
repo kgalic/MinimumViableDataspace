@@ -48,7 +48,7 @@ COPY --from=build /workspace/launchers/runtime-embedded/build/install/runtime-em
 # Copy wrapper script
 COPY launchers/runtime-embedded/run.sh /app/run.sh
 COPY deployment /app/deployment
-RUN chmod +x /app/run.sh
+RUN chmod +x /app/run.sh && cat /app/run.sh | head -1
 
 # Working dir /app to preserve relative paths like deployment/assets/...
 ENTRYPOINT ["/app/run.sh"]

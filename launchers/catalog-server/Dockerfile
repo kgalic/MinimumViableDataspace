@@ -47,6 +47,6 @@ COPY --from=build /workspace/launchers/catalog-server/build/install/catalog-serv
 # Copy wrapper script
 COPY launchers/catalog-server/run.sh /app/run.sh
 COPY deployment /app/deployment
-RUN chmod +x /app/run.sh
+RUN chmod +x /app/run.sh && cat /app/run.sh | head -1
 
 ENTRYPOINT ["/app/run.sh"]
