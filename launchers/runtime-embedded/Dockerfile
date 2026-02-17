@@ -15,6 +15,7 @@ COPY build.gradle.kts build.gradle.kts
 COPY launchers launchers
 COPY extensions extensions
 COPY resources resources
+COPY deployment deployment
 COPY tests tests
 
 # Build with retries and extended timeouts
@@ -46,6 +47,7 @@ COPY --from=build /workspace/launchers/runtime-embedded/build/install/runtime-em
 
 # Copy wrapper script
 COPY launchers/runtime-embedded/run.sh /app/run.sh
+COPY deployment /app/deployment
 RUN chmod +x /app/run.sh
 
 # Working dir /app to preserve relative paths like deployment/assets/...

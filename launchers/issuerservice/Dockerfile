@@ -46,6 +46,7 @@ COPY --from=build /workspace/launchers/issuerservice/build/install/issuerservice
 
 # Copy wrapper script
 COPY launchers/issuerservice/run.sh /app/run.sh
+COPY deployment /app/deployment
 RUN chmod +x /app/run.sh
 
 ENTRYPOINT ["/app/run.sh"]

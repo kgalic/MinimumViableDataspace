@@ -15,6 +15,7 @@ COPY build.gradle.kts build.gradle.kts
 COPY launchers launchers
 COPY extensions extensions
 COPY resources resources
+COPY deployment deployment
 COPY tests tests
 
 # Build with retries and extended timeouts
@@ -46,6 +47,7 @@ COPY --from=build /workspace/launchers/identity-hub/build/install/identity-hub /
 
 # Copy wrapper script
 COPY launchers/identity-hub/run.sh /app/run.sh
+COPY deployment /app/deployment
 RUN chmod +x /app/run.sh
 
 # Keep working dir as /app so relative paths in env files like deployment/assets/... resolve

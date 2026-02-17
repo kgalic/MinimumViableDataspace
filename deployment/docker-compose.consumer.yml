@@ -1,12 +1,12 @@
 services:
   identityhub-consumer:
+    image: identity-hub-provider:latest  # Add explicit image name
     build:
       context: ..
       dockerfile: launchers/identity-hub/Dockerfile
-    env_file:
-      - ./assets/env/consumer_identityhub.env
     environment:
-      - LOG_LEVEL=debug
+      LOG_LEVEL: debug
+      IDENTITY_HUB_ROLE: consumer
     volumes:
       - ./assets:/app/deployment/assets:ro
     network_mode: host
@@ -16,10 +16,8 @@ services:
     build:
       context: ..
       dockerfile: launchers/runtime-embedded/Dockerfile
-    env_file:
-      - ./assets/env/consumer_connector.env
     environment:
-      - LOG_LEVEL=debug
+      LOG_LEVEL: debug
     volumes:
       - ./assets:/app/deployment/assets:ro
     network_mode: host

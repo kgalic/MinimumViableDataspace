@@ -1,14 +1,13 @@
 services:
   identityhub-provider:
+    image: identity-hub-provider:latest  # Add explicit image name
     build:
       context: ..
       dockerfile: launchers/identity-hub/Dockerfile
-    env_file:
-      - ./assets/env/provider_identityhub.env
     environment:
-      - LOG_LEVEL=debug
+      LOG_LEVEL: debug
+      IDENTITY_HUB_ROLE: provider
     volumes:
-      # Mount assets so relative paths in env files (deployment/assets/...) resolve inside /app
       - ./assets:/app/deployment/assets:ro
     network_mode: host
     restart: unless-stopped
@@ -17,10 +16,8 @@ services:
     build:
       context: ..
       dockerfile: launchers/catalog-server/Dockerfile
-    env_file:
-      - ./assets/env/provider_catalogserver.env
     environment:
-      - LOG_LEVEL=debug
+      LOG_LEVEL: debug
     volumes:
       - ./assets:/app/deployment/assets:ro
     network_mode: host
@@ -32,11 +29,8 @@ services:
     build:
       context: ..
       dockerfile: launchers/runtime-embedded/Dockerfile
-    # Uses runtime-embedded launcher
-    env_file:
-      - ./assets/env/provider_connector_qna.env
     environment:
-      - LOG_LEVEL=debug
+      LOG_LEVEL: debug
     volumes:
       - ./assets:/app/deployment/assets:ro
     network_mode: host
@@ -49,10 +43,8 @@ services:
     build:
       context: ..
       dockerfile: launchers/runtime-embedded/Dockerfile
-    env_file:
-      - ./assets/env/provider_connector_manufacturing.env
     environment:
-      - LOG_LEVEL=debug
+      LOG_LEVEL: debug
     volumes:
       - ./assets:/app/deployment/assets:ro
     network_mode: host
