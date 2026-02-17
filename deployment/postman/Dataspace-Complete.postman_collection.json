@@ -477,11 +477,18 @@
 									"    if (catalog['dcat:dataset'] && catalog['dcat:dataset'].length > 0) {",
 									"        const dataset = catalog['dcat:dataset'][0];",
 									"        pm.environment.set('ASSET_ID', dataset['@id']);",
+									"        ",
 									"        if (dataset['odrl:hasPolicy']) {",
-									"            pm.environment.set('POLICY_ID', dataset['odrl:hasPolicy']['@id']);",
+									"            const policy = dataset['odrl:hasPolicy'];",
+									"            pm.environment.set('POLICY_ID', policy['@id']);",
+									"            ",
+									"            // Save complete policy as JSON string for use in negotiation",
+									"            pm.environment.set('FULL_POLICY', JSON.stringify(policy));",
+									"            ",
+									"            console.log('Asset ID: ' + dataset['@id']);",
+									"            console.log('Policy ID: ' + policy['@id']);",
+									"            console.log('Full Policy: ' + JSON.stringify(policy, null, 2));",
 									"        }",
-									"        console.log('Asset ID: ' + dataset['@id']);",
-									"        console.log('Policy ID: ' + dataset['odrl:hasPolicy']['@id']);",
 									"    }",
 									"}"
 								],
@@ -549,13 +556,83 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"@context\": [\n        \"https://w3id.org/edc/connector/management/v0.0.1\"\n    ],\n    \"@type\": \"ContractRequest\",\n    \"counterPartyAddress\": \"{{PROVIDER_QNA_DSP_INTERNAL}}/api/dsp\",\n    \"counterPartyId\": \"{{PROVIDER_ID}}\",\n    \"protocol\": \"dataspace-protocol-http\",\n    \"policy\": {\n        \"@type\": \"Offer\",\n        \"@id\": \"{{POLICY_ID}}\",\n        \"assigner\": \"{{PROVIDER_ID}}\",\n        \"target\": \"{{ASSET_ID}}\"\n    }\n}"
+							"raw": "{\n    \"@context\": [\n        \"https://w3id.org/edc/connector/management/v0.0.1\"\n    ],\n    \"@type\": \"ContractRequest\",\n    \"counterPartyAddress\": \"{{PROVIDER_QNA_DSP_INTERNAL}}/api/dsp\",\n    \"counterPartyId\": \"{{PROVIDER_ID}}\",\n    \"protocol\": \"dataspace-protocol-http\",\n    \"policy\": {\n        \"@type\": \"Offer\",\n        \"@id\": \"{{POLICY_ID}}\",\n        \"assigner\": \"{{PROVIDER_ID}}\",\n        \"permission\": [\n            {\n                \"action\": \"use\",\n                \"constraint\": {\n                    \"leftOperand\": \"MembershipCredential\",\n                    \"operator\": \"eq\",\n                    \"rightOperand\": \"active\"\n                }\n            }\n        ],\n        \"prohibition\": [],\n        \"obligation\": [],\n        \"target\": \"{{ASSET_ID}}\"\n    }\n}"
 						},
 						"url": {
 							"raw": "{{CONSUMER_CONNECTOR_MANAGEMENT}}/api/management/v3/contractnegotiations",
 							"host": ["{{CONSUMER_CONNECTOR_MANAGEMENT}}"],
 							"path": ["api", "management", "v3", "contractnegotiations"]
 						}
+					}
+				},
+				{
+					"name": "Initiate Contract Negotiation (Use Exact Catalog Policy)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (!pm.environment.has('FULL_POLICY')) {",
+									"    throw new Error('Full policy not found. Please run \"Query Catalog\" first!');",
+									"}",
+									"",
+									"// Parse the saved policy and inject it into the request",
+									"const fullPolicy = JSON.parse(pm.environment.get('FULL_POLICY'));",
+									"",
+									"// Build the contract request body",
+									"const contractRequest = {",
+									"    '@context': ['https://w3id.org/edc/connector/management/v0.0.1'],",
+									"    '@type': 'ContractRequest',",
+									"    'counterPartyAddress': pm.environment.get('PROVIDER_QNA_DSP_INTERNAL') + '/api/dsp',",
+									"    'counterPartyId': pm.environment.get('PROVIDER_ID'),",
+									"    'protocol': 'dataspace-protocol-http',",
+									"    'policy': fullPolicy",
+									"};",
+									"",
+									"pm.variables.set('contractRequestBody', JSON.stringify(contractRequest));"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code >= 200 && pm.response.code < 300) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('CONTRACT_NEGOTIATION_ID', response['@id']);",
+									"    console.log('Contract Negotiation ID: ' + response['@id']);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{"key": "value", "value": "{{API_KEY}}", "type": "string"},
+								{"key": "key", "value": "X-Api-Key", "type": "string"}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{{contractRequestBody}}"
+						},
+						"url": {
+							"raw": "{{CONSUMER_CONNECTOR_MANAGEMENT}}/api/management/v3/contractnegotiations",
+							"host": ["{{CONSUMER_CONNECTOR_MANAGEMENT}}"],
+							"path": ["api", "management", "v3", "contractnegotiations"]
+						},
+						"description": "This request uses the EXACT policy from the catalog response, ensuring no validation errors"
 					}
 				},
 				{
@@ -598,6 +675,69 @@
 			]
 		},
 		{
+			"name": "Provider QnA - Data Plane Management",
+			"item": [
+				{
+					"name": "Check Data Plane Status",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{"key": "value", "value": "{{API_KEY}}", "type": "string"},
+								{"key": "key", "value": "X-Api-Key", "type": "string"}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"@context\": {\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\"\n    },\n    \"@type\": \"QuerySpec\"\n}"
+						},
+						"url": {
+							"raw": "{{PROVIDER_QNA_MANAGEMENT}}/api/management/v3/dataplanes/request",
+							"host": ["{{PROVIDER_QNA_MANAGEMENT}}"],
+							"path": ["api", "management", "v3", "dataplanes", "request"]
+						},
+						"description": "Check if data planes are registered and available"
+					}
+				},
+				{
+					"name": "Register Data Plane (If Needed)",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{"key": "value", "value": "{{API_KEY}}", "type": "string"},
+								{"key": "key", "value": "X-Api-Key", "type": "string"}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"@context\": {\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\"\n    },\n    \"@type\": \"DataPlaneInstance\",\n    \"@id\": \"provider-qna-dataplane\",\n    \"url\": \"{{PROVIDER_QNA_CONTROL}}/api/control/v1/dataplanes\",\n    \"allowedSourceTypes\": [\"HttpData\", \"opcua\", \"opcuamqtt\"],\n    \"allowedDestTypes\": [\"HttpProxy\", \"HttpData\", \"MQTT\"],\n    \"properties\": {\n        \"publicApiUrl\": \"{{PROVIDER_QNA_PUBLIC}}/api/public\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{PROVIDER_QNA_CONTROL}}/api/control/v1/dataplanes",
+							"host": ["{{PROVIDER_QNA_CONTROL}}"],
+							"path": ["api", "control", "v1", "dataplanes"]
+						},
+						"description": "Manually register the embedded data plane if it's not auto-registered"
+					}
+				}
+			]
+		},
+		{
 			"name": "Consumer - Data Transfer",
 			"item": [
 				{
@@ -634,13 +774,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"@context\": [\n        \"https://w3id.org/edc/connector/management/v0.0.1\"\n    ],\n    \"@type\": \"TransferRequest\",\n    \"counterPartyAddress\": \"{{PROVIDER_QNA_DSP_INTERNAL}}/api/dsp\",\n    \"contractId\": \"{{CONTRACT_AGREEMENT_ID}}\",\n    \"assetId\": \"{{ASSET_ID}}\",\n    \"protocol\": \"dataspace-protocol-http\",\n    \"transferType\": \"MQTT-PUSH\",\n    \"dataDestination\": {\n        \"@type\": \"DataAddress\",\n        \"type\": \"MQTT\"\n    }\n}"
+							"raw": "{\n    \"@context\": [\n        \"https://w3id.org/edc/connector/management/v0.0.1\"\n    ],\n    \"@type\": \"TransferRequest\",\n    \"counterPartyAddress\": \"{{PROVIDER_QNA_DSP_INTERNAL}}/api/dsp\",\n    \"contractId\": \"{{CONTRACT_AGREEMENT_ID}}\",\n    \"assetId\": \"{{ASSET_ID}}\",\n    \"protocol\": \"dataspace-protocol-http\",\n    \"transferType\": \"HttpData-PULL\",\n    \"dataDestination\": {\n        \"@type\": \"DataAddress\",\n        \"type\": \"HttpProxy\"\n    },\n    \"privateProperties\": {\n        \"receiverHttpEndpoint\": \"{{CONSUMER_CONNECTOR_PUBLIC}}/api/public\"\n    }\n}"
 						},
 						"url": {
 							"raw": "{{CONSUMER_CONNECTOR_MANAGEMENT}}/api/management/v3/transferprocesses",
 							"host": ["{{CONSUMER_CONNECTOR_MANAGEMENT}}"],
 							"path": ["api", "management", "v3", "transferprocesses"]
-						}
+						},
+						"description": "Initiates a data transfer using HttpData-PULL. For MQTT/OPC UA, you may need to configure the data plane differently."
 					}
 				},
 				{
