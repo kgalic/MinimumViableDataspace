@@ -46,7 +46,9 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
         boolean isOpcUaMqttSource = OPCUAMQTT_TYPE.equalsIgnoreCase(contentDataAddress.getType());
         String transferType = transferProcess.getTransferType();
 
-        return isOpcUaMqttSource && (transferType == null || "MQTT-PUSH".equalsIgnoreCase(transferType));
+        boolean canHandle = isOpcUaMqttSource && (transferType == null || "MQTT-PUSH".equalsIgnoreCase(transferType));
+        monitor.debug(() -> "Can handle transfer " + transferProcess.getId() + ": " + canHandle);
+        return canHandle;
     }
 
     @Override
