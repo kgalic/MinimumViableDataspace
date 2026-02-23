@@ -53,7 +53,7 @@ wait_for_service() {
   while [ $attempt -le $max_attempts ]; do
     http_code=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null)
     if [ "$http_code" -gt 0 ] && [ "$http_code" -lt 500 ]; then
-      echo "✓ $name is ready (HTTP $http_code)"
+      #echo "✓ $name is ready (HTTP $http_code)"
       return 0
     fi
     echo "  Waiting for $name... (attempt $attempt/$max_attempts)"
@@ -331,23 +331,3 @@ echo ""
 echo "=========================================="
 echo "Dataspace seeding completed successfully!"
 echo "=========================================="
-echo ""
-echo "Services:"
-echo "  - Consumer Connector:      http://localhost:8081 (management)"
-echo "  - Provider QnA:            http://localhost:8191 (management)"
-echo "  - Provider Manufacturing:  http://localhost:8291 (management)"
-echo "  - Provider Catalog Server: http://localhost:8091 (management)"
-echo "  - Consumer IdentityHub:    http://localhost:7082 (identity)"
-echo "  - Provider IdentityHub:    http://localhost:7092 (identity)"
-echo "  - Issuer Service:          http://localhost:10013 (admin)"
-echo "  - EMQX Dashboard:          http://localhost:18083"
-echo "  - OPC UA Server:           $OPC_SERVER_URL"
-echo ""
-echo "OPC UA MQTT Assets:"
-echo "  - opcua-mqtt-asset-qna-001 (Provider QnA)"
-echo "  - opcua-mqtt-asset-mfg-001 (Provider Manufacturing)"
-echo ""
-echo "Next steps:"
-echo "  1. Monitor MQTT: mosquitto_sub -h localhost -p 1883 -t '#' -v"
-echo "  2. Check catalog: curl http://localhost:8081/api/management/v3/catalog/request"
-echo ""
