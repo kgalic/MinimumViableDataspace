@@ -20,6 +20,7 @@ import java.util.UUID;
 public class OpcUaMqttDataFlowController implements DataFlowController {
 
     private static final String OPCUAMQTT_TYPE = "opcuamqtt";
+    private static final String EDC_NAMESPACE = "https://w3id.org/edc/v0.0.1/ns/";
     private final OpcUaMqttPushService opcUaPushService;
     private final MqttBrokerConfig brokerConfig;
     private final MqttEdrService edrService;
@@ -120,25 +121,31 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
         String mqttUsername = brokerConfig != null ? brokerConfig.getUsername() : null;
         String mqttPassword = brokerConfig != null ? brokerConfig.getPassword() : null;
 
-        edrService.storeEdr(transferId, assetId, brokerUrl, assetId,
-                           mqttUsername, mqttPassword, authToken);
-
         monitor.info("Stored MQTT EDR for transfer " + transferId +
                     " - Topic: " + assetId + ", Broker: " + brokerUrl);
 
         // Return success response with MQTT broker details for EDR
         // The DataFlowResponse contains the DataAddress that will be returned to consumer
+        var dataAddress = DataAddress.Builder.newInstance()
+                .type(OPCUAMQTT_TYPE)
+                .property(EDC_NAMESPACE + "endpoint", brokerUrl)
+                .property(EDC_NAMESPACE + "authToken", authToken)
+                .property(EDC_NAMESPACE + "topic", assetId)
+                .property("endpoint", brokerUrl)  // Keep for backward compatibility
+                .property("topic", assetId)
+                .property("brokerUrl", brokerUrl)
+                .property("pushActive", "true")
+                .property("status", "active")
+                .property("authToken", authToken)
+                .property("transferId", transferId)
+                .build();
+
+
+        // Store the complete DataAddress in EDR
+        edrService.storeEdr(transferId, dataAddress);
+
         var response = DataFlowResponse.Builder.newInstance()
-                .dataAddress(DataAddress.Builder.newInstance()
-                        .type("MQTT")
-                        .property("endpoint", brokerUrl)           // MQTT broker endpoint
-                        .property("topic", assetId)                // Topic = assetId (singleton pattern)
-                        .property("brokerUrl", brokerUrl)          // Alternative property name
-                        .property("pushActive", "true")
-                        .property("status", "active")
-                        .property("authToken", authToken)          // Auth token for EDR endpoint
-                        .property("transferId", transferId)        // Transfer ID for EDR lookup
-                        .build())
+                .dataAddress(dataAddress)
                 .build();
 
         return StatusResult.success(response);

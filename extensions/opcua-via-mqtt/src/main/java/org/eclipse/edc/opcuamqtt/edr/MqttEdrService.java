@@ -1,24 +1,19 @@
 package org.eclipse.edc.opcuamqtt.edr;
 
+import org.eclipse.edc.spi.types.domain.DataAddress;
+
 /**
  * Service interface for managing MQTT Endpoint Data References (EDR).
  * Acts as a cache for active transfers with MQTT connection details.
  */
 public interface MqttEdrService {
-
     /**
-     * Store MQTT connection details for a transfer.
+     * Store EDR entry using a complete DataAddress.
      *
-     * @param transferId     Transfer process ID
-     * @param assetId        Asset ID
-     * @param brokerUrl      MQTT broker URL
-     * @param topic          MQTT topic (usually = assetId)
-     * @param username       Optional MQTT username
-     * @param password       Optional MQTT password
-     * @param authToken      Authorization token for accessing this EDR
+     * @param transferId  Transfer process ID
+     * @param dataAddress Complete DataAddress with all properties
      */
-    void storeEdr(String transferId, String assetId, String brokerUrl, String topic,
-                  String username, String password, String authToken);
+    void storeEdr(String transferId, DataAddress dataAddress);
 
     /**
      * Retrieve MQTT broker URL for a transfer.

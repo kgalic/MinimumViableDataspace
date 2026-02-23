@@ -1,5 +1,7 @@
 package org.eclipse.edc.opcuamqtt.edr;
 
+import org.eclipse.edc.spi.types.domain.DataAddress;
+
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,17 +15,16 @@ public class InMemoryMqttEdrService implements MqttEdrService {
     private final Map<String, MqttEdrEntry> entries = new ConcurrentHashMap<>();
 
     @Override
-    public void storeEdr(String transferId, String assetId, String brokerUrl, String topic,
-                        String username, String password, String authToken) {
+    public void storeEdr(String transferId, DataAddress dataAddress) {
         var entry = new MqttEdrEntry(
                 transferId,
-                assetId,
+                (String) dataAddress.getProperty("topic"),  // assetId is stored as topic
                 null,  // contractAgreementId can be set later if needed
-                brokerUrl,
-                topic,
-                username,
-                password,
-                authToken,
+                (String) dataAddress.getProperty("brokerUrl"),
+                (String) dataAddress.getProperty("topic"),
+                (String) dataAddress.getProperty("username"),
+                (String) dataAddress.getProperty("password"),
+                (String) dataAddress.getProperty("authToken"),
                 Instant.now()
         );
         entries.put(transferId, entry);
