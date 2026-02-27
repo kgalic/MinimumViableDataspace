@@ -7,6 +7,8 @@ import org.eclipse.edc.connector.controlplane.transfer.spi.types.TransferProcess
 import org.eclipse.edc.opcuamqtt.edr.MqttEdrService;
 import org.eclipse.edc.opcuamqtt.mqttpush.MqttBrokerConfig;
 import org.eclipse.edc.opcuamqtt.mqttpush.OpcUaMqttPushService;
+import org.eclipse.edc.opcuamqtt.security.MosquittoCredentials;
+import org.eclipse.edc.opcuamqtt.security.MosquittoSecurityService;
 import org.eclipse.edc.policy.model.Policy;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.response.ResponseStatus;
@@ -24,15 +26,18 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
     private final OpcUaMqttPushService opcUaPushService;
     private final MqttBrokerConfig brokerConfig;
     private final MqttEdrService edrService;
+    private final MosquittoSecurityService securityService;
     private final Monitor monitor;
 
     public OpcUaMqttDataFlowController(OpcUaMqttPushService opcUaPushService,
                                       MqttBrokerConfig brokerConfig,
                                       MqttEdrService edrService,
+                                      MosquittoSecurityService securityService,
                                       Monitor monitor) {
         this.opcUaPushService = opcUaPushService;
         this.brokerConfig = brokerConfig;
         this.edrService = edrService;
+        this.securityService = securityService;
         this.monitor = monitor;
     }
 
@@ -78,6 +83,17 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
     public StatusResult<Void> terminate(@NotNull TransferProcess transferProcess) {
         String transferId = transferProcess.getId();
         opcUaPushService.stopPushing(transferId);
+
+        // Clean up Mosquitto user and role
+        String username = "edc-user-" + transferId;
+        String roleName = "edc-role-" + transferId;
+        var cleanupResult = securityService.removeUserAndRole(username, roleName);
+        if (cleanupResult.failed()) {
+            monitor.warning("Failed to clean up Mosquitto user and role: " + cleanupResult.getFailureDetail());
+        } else {
+            monitor.info("Cleaned up Mosquitto user " + username + " and role " + roleName);
+        }
+
         // Clean up EDR entry when transfer is terminated
         edrService.removeEdr(transferId);
         monitor.info("Removed MQTT EDR for transfer " + transferId);
@@ -101,6 +117,26 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
 
         String transferId = transferProcess.getId();
 
+        // Get broker URL from configuration or use default
+        String brokerUrl = brokerConfig != null && brokerConfig.isConfigured()
+                ? brokerConfig.getBrokerUrl()
+                : "tcp://localhost:1883";
+
+        // Create user and permissions using Mosquitto Dynamic Security
+        // Topic pattern for this asset (allow wildcard subscriptions)
+        String topicPattern = assetId + "/#";
+
+        monitor.info("Creating Mosquitto user with permissions for topic: " + topicPattern);
+        var credentialsResult = securityService.createUserWithPermissions(topicPattern, transferId);
+
+        if (credentialsResult.failed()) {
+            return StatusResult.failure(ResponseStatus.FATAL_ERROR, 
+                    "Failed to create Mosquitto user and permissions: " + credentialsResult.getFailureDetail());
+        }
+
+        MosquittoCredentials credentials = credentialsResult.getContent();
+        monitor.info("Created Mosquitto user: " + credentials.getUsername() + " with role: " + credentials.getRoleName());
+
         // Start pushing OPC UA data to MQTT topic (topic = assetId)
         opcUaPushService.startPushing(
                 transferId,
@@ -108,18 +144,8 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
                 transferProcess.getContentDataAddress()
         );
 
-        // Get broker URL from configuration or use default
-        String brokerUrl = brokerConfig != null && brokerConfig.isConfigured()
-                ? brokerConfig.getBrokerUrl()
-                : "tcp://localhost:1883";
-
         // Generate auth token for EDR access
         String authToken = UUID.randomUUID().toString();
-
-        // Store MQTT connection details in EDR cache
-        // This allows consumers to retrieve broker details via EDR endpoint
-        String mqttUsername = brokerConfig != null ? brokerConfig.getUsername() : null;
-        String mqttPassword = brokerConfig != null ? brokerConfig.getPassword() : null;
 
         monitor.info("Stored MQTT EDR for transfer " + transferId +
                     " - Topic: " + assetId + ", Broker: " + brokerUrl);
@@ -131,15 +157,9 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
                 .property(EDC_NAMESPACE + "endpoint", brokerUrl)
                 .property(EDC_NAMESPACE + "authToken", authToken)
                 .property(EDC_NAMESPACE + "topic", assetId)
-                .property("endpoint", brokerUrl)  // Keep for backward compatibility
-                .property("topic", assetId)
-                .property("brokerUrl", brokerUrl)
-                .property("pushActive", "true")
-                .property("status", "active")
-                .property("authToken", authToken)
-                .property("transferId", transferId)
+                .property(EDC_NAMESPACE + "username", credentials.getUsername())
+                .property(EDC_NAMESPACE + "password", credentials.getPassword())
                 .build();
-
 
         // Store the complete DataAddress in EDR
         edrService.storeEdr(transferId, dataAddress);

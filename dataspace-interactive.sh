@@ -355,6 +355,16 @@ get_edr_endpoint() {
         local topic=$(echo "$response" | jq -r '.topic')
         log_success "MQTT Topic: $topic"
     fi
+
+    if echo "$response" | jq -e '.username' > /dev/null 2>&1; then
+        local username=$(echo "$response" | jq -r '.username')
+        log_success "MQTT Username: $username"
+    fi
+
+    if echo "$response" | jq -e '.password' > /dev/null 2>&1; then
+        local password=$(echo "$response" | jq -r '.password')
+        log_success "MQTT Password: $password"
+    fi
 }
 
 ################################################################################

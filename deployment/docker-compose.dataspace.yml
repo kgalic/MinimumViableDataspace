@@ -168,14 +168,15 @@ services:
     restart: unless-stopped
     depends_on:
       - identityhub-consumer
-  emqx:
-    image: emqx/emqx:5.3.2
-    container_name: emqx
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto-dynsec
+    restart: unless-stopped
     ports:
       - "1883:1883"
-      - "8883:8883"
-      - "18083:18083"
-
+    volumes:
+      - ./mosquitto-dynsec/config:/mosquitto/config
+      - mosquitto-data:/mosquitto/data
   opcua-server:
     image: ghcr.io/umati/sample-server:main
     container_name: opcua-server
@@ -190,3 +191,6 @@ services:
     volumes:
       - ./assets/issuer/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./assets/issuer/did.docker.json:/var/www/.well-known/did.json:ro
+volumes:
+  mosquitto-data:
+
