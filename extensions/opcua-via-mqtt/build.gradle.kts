@@ -23,6 +23,11 @@ dependencies {
 
     // JSON processing
     implementation(libs.jackson.datatype.jakarta.jsonp)
+
+    // BouncyCastle for PEM certificate/key parsing
+    implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.78.1")
+
 }
 
 java {

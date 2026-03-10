@@ -25,6 +25,12 @@ public class OpcUaMqttExtension implements ServiceExtension {
     private static final String MQTT_PASSWORD_ENV = "edc.opcua.mqtt.password";
     private static final String MQTT_ADMIN_USERNAME_ENV = "edc.opcua.mqtt.admin.username";
     private static final String MQTT_ADMIN_PASSWORD_ENV = "edc.opcua.mqtt.admin.password";
+    private static final String MQTT_CERTIFICATE_AUTHENTICATION_ENABLED = "edc.opcua.mqtt.cert.auth.enabled";
+    private static final String MQTT_ADMIN_CERTIFICATE_PATH = "edc.opcua.mqtt.admin.cert.path";
+    private static final String MQTT_ADMIN_CERTIFICATE_KEY_PATH = "edc.opcua.mqtt.admin.key.path";
+    private static final String MQTT_PUSH_USER_CERTIFICATE_PATH = "edc.opcua.mqtt.push.user.cert.path";
+    private static final String MQTT_PUSH_USER_CERTIFICATE_KEY_PATH = "edc.opcua.mqtt.push.user.key.path";
+    private static final String MQTT_CA_CHAIN_CERTIFICATE_PATH = "edc.opcua.mqtt.ca.cert.path";
 
     @Inject(required = false)
     private DataFlowManager dataFlowManager;
@@ -47,20 +53,62 @@ public class OpcUaMqttExtension implements ServiceExtension {
         context.registerService(MqttOpcUaClient.class, opcUaClient);
         monitor.info("Registered internal MqttOpcUaClient for MQTT extension");
 
-        // Create MQTT client implementation
-        OpcUaMqttClient mqttClient = new PahoOpcUaMqttClientImpl(monitor);
-        context.registerService(OpcUaMqttClient.class, mqttClient);
-        monitor.info("Registered OpcUaMqttClient (Paho implementation)");
-
         // Load MQTT broker configuration from EDC settings (environment variables, system properties, or config files)
         monitor.info("Reading MQTT broker configuration from EDC settings...");
         String brokerUrl = context.getSetting(MQTT_BROKER_URL_ENV, null);
-        String mqttUsername = context.getSetting(MQTT_USERNAME_ENV, null);
-        String mqttPassword = context.getSetting(MQTT_PASSWORD_ENV, null);
+        String mqttUsername = null;
+        String mqttPassword = null;
+        String adminCertPath = null;
+        String adminKeyPath = null;
+        String pushUserCertPath = null;
+        String pushUserKeyPath = null;
+        String caChainCertPath = null;
+        String adminUsername = null;
+        String adminPassword = null;
+        OpcUaMqttClient pushMqttClient = null;
+        OpcUaMqttClient adminMqttClient = null;
+        MqttBrokerConfig brokerConfig = null;
 
-        monitor.debug("Configuration read - brokerUrl: " + (brokerUrl != null ? brokerUrl : "null") +
-                    ", username: " + (mqttUsername != null ? "***" : "null") +
-                    ", password: " + (mqttPassword != null ? "***" : "null"));
+        boolean certBasedAuthEnabled = context.getSetting(MQTT_CERTIFICATE_AUTHENTICATION_ENABLED, false);
+        monitor.debug("Certificate-based authentication enabled: " + certBasedAuthEnabled);
+
+        if (certBasedAuthEnabled) {
+            adminCertPath = context.getSetting(MQTT_ADMIN_CERTIFICATE_PATH, null);
+            adminKeyPath = context.getSetting(MQTT_ADMIN_CERTIFICATE_KEY_PATH, null);
+            caChainCertPath = context.getSetting(MQTT_CA_CHAIN_CERTIFICATE_PATH, null);
+            pushUserCertPath = context.getSetting(MQTT_PUSH_USER_CERTIFICATE_PATH, null);
+            pushUserKeyPath = context.getSetting(MQTT_PUSH_USER_CERTIFICATE_KEY_PATH, null);
+
+            if (adminCertPath == null || adminKeyPath == null || caChainCertPath == null || pushUserCertPath == null || pushUserKeyPath == null) {
+                monitor.warning("Certificate-based authentication is enabled, but some required settings are missing. " +
+                        "Please check your configuration.");
+                return;
+            }
+
+            brokerConfig = new MqttBrokerConfig(brokerUrl, caChainCertPath, pushUserCertPath, pushUserKeyPath, null);
+            pushMqttClient = new PahoOpcUaMqttClientImpl(monitor, caChainCertPath, pushUserCertPath, pushUserKeyPath);
+            adminMqttClient = new PahoOpcUaMqttClientImpl(monitor, caChainCertPath, adminCertPath, adminKeyPath, null);
+        } else {
+            mqttUsername = context.getSetting(MQTT_USERNAME_ENV, null);
+            mqttPassword = context.getSetting(MQTT_PASSWORD_ENV, null);
+            adminUsername = context.getSetting(MQTT_ADMIN_USERNAME_ENV, null);
+            adminPassword = context.getSetting(MQTT_ADMIN_PASSWORD_ENV, null);
+
+            if (mqttUsername == null || mqttPassword == null || adminUsername == null || adminPassword == null) {
+                monitor.warning("Certificate-based authentication is disabled, but some required settings are missing. " +
+                        "Please check your configuration.");
+                return;
+            }
+
+            brokerConfig = new MqttBrokerConfig(brokerUrl, mqttUsername, mqttPassword);
+            pushMqttClient = new PahoOpcUaMqttClientImpl(monitor, mqttUsername, mqttPassword);
+            adminMqttClient = new PahoOpcUaMqttClientImpl(monitor, adminUsername, adminPassword);
+        }
+        monitor.info("MqttBrokerConfig created: " + brokerConfig);
+
+        // Create MQTT client implementation
+        context.registerService(OpcUaMqttClient.class, pushMqttClient);
+        monitor.info("Registered OpcUaMqttClient (Paho implementation)");
 
         if (brokerUrl == null || brokerUrl.trim().isEmpty()) {
             monitor.warning("MQTT broker URL not configured. Set '" + MQTT_BROKER_URL_ENV + "' configuration. " +
@@ -69,11 +117,8 @@ public class OpcUaMqttExtension implements ServiceExtension {
             monitor.info("MQTT broker configured: " + brokerUrl);
         }
 
-        MqttBrokerConfig brokerConfig = new MqttBrokerConfig(brokerUrl, mqttUsername, mqttPassword);
-        monitor.info("MqttBrokerConfig created: " + brokerConfig);
-
         // Create and register the push service
-        OpcUaMqttPushService pushService = new OpcUaMqttPushServiceImpl(opcUaClient, mqttClient, brokerConfig, monitor);
+        OpcUaMqttPushService pushService = new OpcUaMqttPushServiceImpl(opcUaClient, pushMqttClient, brokerConfig, monitor);
         context.registerService(OpcUaMqttPushService.class, pushService);
         monitor.info("Registered OpcUaMqttPushService with provider-managed MQTT broker");
 
@@ -82,12 +127,10 @@ public class OpcUaMqttExtension implements ServiceExtension {
         monitor.info("Registered MqttEdrService for caching active MQTT transfers");
 
         // Create and register Mosquitto Dynamic Security service
-        String adminUsername = context.getSetting(MQTT_ADMIN_USERNAME_ENV, null);
-        String adminPassword = context.getSetting(MQTT_ADMIN_PASSWORD_ENV, null);
 
         if (brokerUrl != null && !brokerUrl.trim().isEmpty()) {
-            MosquittoSecurityService securityService = new org.eclipse.edc.opcuamqtt.security.MosquittoSecurityServiceImpl(
-                    brokerUrl, adminUsername, adminPassword, monitor);
+
+            MosquittoSecurityService securityService = new org.eclipse.edc.opcuamqtt.security.MosquittoSecurityServiceImpl(brokerUrl, adminMqttClient, monitor);
             context.registerService(MosquittoSecurityService.class, securityService);
             monitor.info("Registered MosquittoSecurityService for dynamic user and role management");
         } else {

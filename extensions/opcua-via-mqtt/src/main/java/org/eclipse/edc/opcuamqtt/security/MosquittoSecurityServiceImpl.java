@@ -1,11 +1,11 @@
 package org.eclipse.edc.opcuamqtt.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.edc.opcuamqtt.client.OpcUaMqttClient;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.result.Result;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
@@ -25,17 +25,15 @@ public class MosquittoSecurityServiceImpl implements MosquittoSecurityService {
     private static final String RESPONSE_TOPIC = "$CONTROL/dynamic-security/v1/response";
     private static final int RESPONSE_TIMEOUT_SECONDS = 10;
 
+    private final OpcUaMqttClient mqttClient;
     private final String brokerUrl;
-    private final String adminUsername;
-    private final String adminPassword;
     private final Monitor monitor;
     private final ObjectMapper objectMapper;
 
-    public MosquittoSecurityServiceImpl(String brokerUrl, String adminUsername, String adminPassword, Monitor monitor) {
-        this.brokerUrl = brokerUrl;
-        this.adminUsername = adminUsername;
-        this.adminPassword = adminPassword;
+    public MosquittoSecurityServiceImpl(String brokerUrl, OpcUaMqttClient mqttClient, Monitor monitor) {
+        this.mqttClient = mqttClient;
         this.monitor = monitor;
+        this.brokerUrl = brokerUrl;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -50,23 +48,11 @@ public class MosquittoSecurityServiceImpl implements MosquittoSecurityService {
 
         try {
             // Create dedicated MQTT client for control messages
-            String clientId = "edc-security-" + UUID.randomUUID();
-            MqttClient client = new MqttClient(brokerUrl, clientId);
             MqttConnectOptions options = new MqttConnectOptions();
             options.setCleanSession(true);
 
-            if (adminUsername != null && !adminUsername.isEmpty()) {
-                options.setUserName(adminUsername);
-                options.setPassword(adminPassword != null ? adminPassword.toCharArray() : new char[0]);
-            }
-
-            client.connect(options);
-            monitor.debug("Connected to Mosquitto for security operations");
-
-            // Subscribe to response topic
-            // Use array holder to make it effectively final for use in lambda
             final CompletableFuture<String>[] responseFutureHolder = new CompletableFuture[]{new CompletableFuture<>()};
-            client.setCallback(new MqttCallback() {
+            this.mqttClient.setCallback(brokerUrl, new MqttCallback() {
                 @Override
                 public void connectionLost(Throwable cause) {
                     monitor.warning("Connection lost during security operation", cause);
@@ -88,40 +74,40 @@ public class MosquittoSecurityServiceImpl implements MosquittoSecurityService {
                 }
             });
 
-            client.subscribe(RESPONSE_TOPIC);
+            // Subscribe to topic
+            this.mqttClient.subscribe(brokerUrl, RESPONSE_TOPIC);
 
             // Step 1: Create user
             monitor.debug("Step 1: Creating user " + username);
-            publishCommand(client, MosquittoCommand.Command.createClient(username, password));
+            publishCommand(this.mqttClient, MosquittoCommand.Command.createClient(username, password));
             waitForResponse(responseFutureHolder[0], "Create user");
 
             // Step 2: Create role
             monitor.debug("Step 2: Creating role " + roleName);
             responseFutureHolder[0] = new CompletableFuture<>();
-            publishCommand(client, MosquittoCommand.Command.createRole(roleName));
+            publishCommand(this.mqttClient, MosquittoCommand.Command.createRole(roleName));
             waitForResponse(responseFutureHolder[0], "Create role");
 
             // Step 3: Add subscribe permission
             monitor.debug("Step 3: Adding subscribe permission for topic: " + topic);
             responseFutureHolder[0] = new CompletableFuture<>();
-            publishCommand(client, MosquittoCommand.Command.addRoleAcl(roleName, "subscribePattern", topic, true));
+            publishCommand(this.mqttClient, MosquittoCommand.Command.addRoleAcl(roleName, "subscribePattern", topic, true));
             waitForResponse(responseFutureHolder[0], "Add subscribe permission");
 
             // Step 4: Add publishClientReceive permission
             monitor.debug("Step 4: Adding publishClientReceive permission for topic: " + topic);
             responseFutureHolder[0] = new CompletableFuture<>();
-            publishCommand(client, MosquittoCommand.Command.addRoleAcl(roleName, "publishClientReceive", topic, true));
+            publishCommand(this.mqttClient, MosquittoCommand.Command.addRoleAcl(roleName, "publishClientReceive", topic, true));
             waitForResponse(responseFutureHolder[0], "Add publishClientReceive permission");
 
             // Step 5: Assign role to user
             monitor.debug("Step 5: Assigning role to user");
             responseFutureHolder[0] = new CompletableFuture<>();
-            publishCommand(client, MosquittoCommand.Command.addClientRole(username, roleName));
+            publishCommand(this.mqttClient, MosquittoCommand.Command.addClientRole(username, roleName));
             waitForResponse(responseFutureHolder[0], "Assign role to user");
 
             // Clean up
-            client.disconnect();
-            client.close();
+            this.mqttClient.disconnect(brokerUrl);
 
             monitor.info("Successfully created Mosquitto user " + username + " with role " + roleName);
             return Result.success(new MosquittoCredentials(username, password, roleName, topic));
@@ -137,22 +123,9 @@ public class MosquittoSecurityServiceImpl implements MosquittoSecurityService {
         monitor.info("Removing Mosquitto user " + username + " and role " + roleName);
 
         try {
-            String clientId = "edc-security-cleanup-" + UUID.randomUUID();
-            MqttClient client = new MqttClient(brokerUrl, clientId);
-            MqttConnectOptions options = new MqttConnectOptions();
-            options.setCleanSession(true);
-
-            if (adminUsername != null && !adminUsername.isEmpty()) {
-                options.setUserName(adminUsername);
-                options.setPassword(adminPassword != null ? adminPassword.toCharArray() : new char[0]);
-            }
-
-            client.connect(options);
-
-            // Subscribe to response topic
             // Use array holder to make it effectively final for use in lambda
             final CompletableFuture<String>[] responseFutureHolder = new CompletableFuture[]{new CompletableFuture<>()};
-            client.setCallback(new MqttCallback() {
+            this.mqttClient.setCallback(brokerUrl, new MqttCallback() {
                 @Override
                 public void connectionLost(Throwable cause) {
                     responseFutureHolder[0].completeExceptionally(cause);
@@ -170,13 +143,13 @@ public class MosquittoSecurityServiceImpl implements MosquittoSecurityService {
                 }
             });
 
-            client.subscribe(RESPONSE_TOPIC);
+            this.mqttClient.subscribe(brokerUrl, RESPONSE_TOPIC);
 
             // Delete user
             MosquittoCommand.Command deleteUserCmd = new MosquittoCommand.Command();
             deleteUserCmd.setCommand("deleteClient");
             deleteUserCmd.setUsername(username);
-            publishCommand(client, deleteUserCmd);
+            publishCommand(this.mqttClient, deleteUserCmd);
             waitForResponse(responseFutureHolder[0], "Delete user");
 
             // Delete role
@@ -184,11 +157,10 @@ public class MosquittoSecurityServiceImpl implements MosquittoSecurityService {
             MosquittoCommand.Command deleteRoleCmd = new MosquittoCommand.Command();
             deleteRoleCmd.setCommand("deleteRole");
             deleteRoleCmd.setRolename(roleName);
-            publishCommand(client, deleteRoleCmd);
+            publishCommand(this.mqttClient, deleteRoleCmd);
             waitForResponse(responseFutureHolder[0], "Delete role");
 
-            client.disconnect();
-            client.close();
+            this.mqttClient.disconnect(brokerUrl);
 
             monitor.info("Successfully removed Mosquitto user and role");
             return Result.success();
@@ -199,7 +171,7 @@ public class MosquittoSecurityServiceImpl implements MosquittoSecurityService {
         }
     }
 
-    private void publishCommand(MqttClient client, MosquittoCommand.Command command) throws Exception {
+    private void publishCommand(OpcUaMqttClient client, MosquittoCommand.Command command) throws Exception {
         MosquittoCommand wrapper = new MosquittoCommand(List.of(command));
         String json = objectMapper.writeValueAsString(wrapper);
 
@@ -207,7 +179,7 @@ public class MosquittoSecurityServiceImpl implements MosquittoSecurityService {
 
         MqttMessage message = new MqttMessage(json.getBytes(StandardCharsets.UTF_8));
         message.setQos(1); // At least once delivery
-        client.publish(CONTROL_TOPIC, message);
+        client.publish(brokerUrl, CONTROL_TOPIC, message.getPayload());
     }
 
     private void waitForResponse(CompletableFuture<String> future, String operation) throws Exception {
