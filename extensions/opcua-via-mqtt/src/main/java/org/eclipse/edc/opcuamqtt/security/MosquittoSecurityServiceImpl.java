@@ -118,6 +118,87 @@ public class MosquittoSecurityServiceImpl implements MosquittoSecurityService {
         }
     }
 
+
+    @Override
+    public Result<MosquittoCredentials> createUserWithPermissions(String username, String topic, String transferId) {
+        // Generate unique username, password, and role name
+        String roleName = "edc-role-" + transferId;
+        String password = UUID.randomUUID().toString();
+
+        monitor.info("Creating Mosquitto user and role for transfer: " + transferId);
+
+        try {
+            // Create dedicated MQTT client for control messages
+            MqttConnectOptions options = new MqttConnectOptions();
+            options.setCleanSession(true);
+
+            final CompletableFuture<String>[] responseFutureHolder = new CompletableFuture[]{new CompletableFuture<>()};
+            this.mqttClient.setCallback(brokerUrl, new MqttCallback() {
+                @Override
+                public void connectionLost(Throwable cause) {
+                    monitor.warning("Connection lost during security operation", cause);
+                    responseFutureHolder[0].completeExceptionally(cause);
+                }
+
+                @Override
+                public void messageArrived(String topic, MqttMessage message) {
+                    if (RESPONSE_TOPIC.equals(topic)) {
+                        String response = new String(message.getPayload(), StandardCharsets.UTF_8);
+                        monitor.debug("Received security response: " + response);
+                        responseFutureHolder[0].complete(response);
+                    }
+                }
+
+                @Override
+                public void deliveryComplete(IMqttDeliveryToken token) {
+                    // Not needed for this implementation
+                }
+            });
+
+            // Subscribe to topic
+            this.mqttClient.subscribe(brokerUrl, RESPONSE_TOPIC);
+
+            // Step 1: Create user
+            monitor.debug("Step 1: Creating user " + username);
+            publishCommand(this.mqttClient, MosquittoCommand.Command.createClient(username, password));
+            waitForResponse(responseFutureHolder[0], "Create user");
+
+            // Step 2: Create role
+            monitor.debug("Step 2: Creating role " + roleName);
+            responseFutureHolder[0] = new CompletableFuture<>();
+            publishCommand(this.mqttClient, MosquittoCommand.Command.createRole(roleName));
+            waitForResponse(responseFutureHolder[0], "Create role");
+
+            // Step 3: Add subscribe permission
+            monitor.debug("Step 3: Adding subscribe permission for topic: " + topic);
+            responseFutureHolder[0] = new CompletableFuture<>();
+            publishCommand(this.mqttClient, MosquittoCommand.Command.addRoleAcl(roleName, "subscribePattern", topic, true));
+            waitForResponse(responseFutureHolder[0], "Add subscribe permission");
+
+            // Step 4: Add publishClientReceive permission
+            monitor.debug("Step 4: Adding publishClientReceive permission for topic: " + topic);
+            responseFutureHolder[0] = new CompletableFuture<>();
+            publishCommand(this.mqttClient, MosquittoCommand.Command.addRoleAcl(roleName, "publishClientReceive", topic, true));
+            waitForResponse(responseFutureHolder[0], "Add publishClientReceive permission");
+
+            // Step 5: Assign role to user
+            monitor.debug("Step 5: Assigning role to user");
+            responseFutureHolder[0] = new CompletableFuture<>();
+            publishCommand(this.mqttClient, MosquittoCommand.Command.addClientRole(username, roleName));
+            waitForResponse(responseFutureHolder[0], "Assign role to user");
+
+            // Clean up
+            this.mqttClient.disconnect(brokerUrl);
+
+            monitor.info("Successfully created Mosquitto user " + username + " with role " + roleName);
+            return Result.success(new MosquittoCredentials(username, password, roleName, topic));
+
+        } catch (Exception e) {
+            monitor.severe("Failed to create Mosquitto user and permissions", e);
+            return Result.failure("Failed to create Mosquitto user: " + e.getMessage());
+        }
+    }
+
     @Override
     public Result<Void> removeUserAndRole(String username, String roleName) {
         monitor.info("Removing Mosquitto user " + username + " and role " + roleName);

@@ -12,6 +12,9 @@ import org.eclipse.edc.opcuamqtt.mqttpush.OpcUaMqttPushService;
 import org.eclipse.edc.opcuamqtt.mqttpush.OpcUaMqttPushServiceImpl;
 import org.eclipse.edc.opcuamqtt.opcua.MqttOpcUaClient;
 import org.eclipse.edc.opcuamqtt.opcua.OpcUaClientImpl;
+import org.eclipse.edc.opcuamqtt.pki.PkiCertificateService;
+import org.eclipse.edc.opcuamqtt.pki.PkiCertificateServiceImpl;
+import org.eclipse.edc.opcuamqtt.pki.PkiConfig;
 import org.eclipse.edc.opcuamqtt.security.MosquittoSecurityService;
 import org.eclipse.edc.runtime.metamodel.annotation.Inject;
 import org.eclipse.edc.spi.system.ServiceExtension;
@@ -31,6 +34,8 @@ public class OpcUaMqttExtension implements ServiceExtension {
     private static final String MQTT_PUSH_USER_CERTIFICATE_PATH = "edc.opcua.mqtt.push.user.cert.path";
     private static final String MQTT_PUSH_USER_CERTIFICATE_KEY_PATH = "edc.opcua.mqtt.push.user.key.path";
     private static final String MQTT_CA_CHAIN_CERTIFICATE_PATH = "edc.opcua.mqtt.ca.cert.path";
+    private static final String PKI_ENDPOINT_URL = "edc.opcua.mqtt.pki.endpoint.url";
+    private static final String PKI_ENDPOINT_KEY = "edc.opcua.mqtt.pki.endpoint.key";
 
     @Inject(required = false)
     private DataFlowManager dataFlowManager;
@@ -56,43 +61,39 @@ public class OpcUaMqttExtension implements ServiceExtension {
         // Load MQTT broker configuration from EDC settings (environment variables, system properties, or config files)
         monitor.info("Reading MQTT broker configuration from EDC settings...");
         String brokerUrl = context.getSetting(MQTT_BROKER_URL_ENV, null);
-        String mqttUsername = null;
-        String mqttPassword = null;
-        String adminCertPath = null;
-        String adminKeyPath = null;
-        String pushUserCertPath = null;
-        String pushUserKeyPath = null;
-        String caChainCertPath = null;
-        String adminUsername = null;
-        String adminPassword = null;
+
         OpcUaMqttClient pushMqttClient = null;
         OpcUaMqttClient adminMqttClient = null;
         MqttBrokerConfig brokerConfig = null;
+        PkiConfig pkiConfig = null;
 
         boolean certBasedAuthEnabled = context.getSetting(MQTT_CERTIFICATE_AUTHENTICATION_ENABLED, false);
         monitor.debug("Certificate-based authentication enabled: " + certBasedAuthEnabled);
 
         if (certBasedAuthEnabled) {
-            adminCertPath = context.getSetting(MQTT_ADMIN_CERTIFICATE_PATH, null);
-            adminKeyPath = context.getSetting(MQTT_ADMIN_CERTIFICATE_KEY_PATH, null);
-            caChainCertPath = context.getSetting(MQTT_CA_CHAIN_CERTIFICATE_PATH, null);
-            pushUserCertPath = context.getSetting(MQTT_PUSH_USER_CERTIFICATE_PATH, null);
-            pushUserKeyPath = context.getSetting(MQTT_PUSH_USER_CERTIFICATE_KEY_PATH, null);
+            var adminCertPath = context.getSetting(MQTT_ADMIN_CERTIFICATE_PATH, null);
+            var adminKeyPath = context.getSetting(MQTT_ADMIN_CERTIFICATE_KEY_PATH, null);
+            var caChainCertPath = context.getSetting(MQTT_CA_CHAIN_CERTIFICATE_PATH, null);
+            var pushUserCertPath = context.getSetting(MQTT_PUSH_USER_CERTIFICATE_PATH, null);
+            var pushUserKeyPath = context.getSetting(MQTT_PUSH_USER_CERTIFICATE_KEY_PATH, null);
+            var pkiEndpoint = context.getSetting(PKI_ENDPOINT_URL, null);
+            var pkiKey = context.getSetting(PKI_ENDPOINT_KEY, null);
 
-            if (adminCertPath == null || adminKeyPath == null || caChainCertPath == null || pushUserCertPath == null || pushUserKeyPath == null) {
+            if (adminCertPath == null || adminKeyPath == null || caChainCertPath == null || pushUserCertPath == null || pushUserKeyPath == null || pkiEndpoint == null || pkiKey == null) {
                 monitor.warning("Certificate-based authentication is enabled, but some required settings are missing. " +
                         "Please check your configuration.");
                 return;
             }
 
+            pkiConfig = new PkiConfig(pkiEndpoint, pkiKey);
             brokerConfig = new MqttBrokerConfig(brokerUrl, caChainCertPath, pushUserCertPath, pushUserKeyPath, null);
             pushMqttClient = new PahoOpcUaMqttClientImpl(monitor, caChainCertPath, pushUserCertPath, pushUserKeyPath);
             adminMqttClient = new PahoOpcUaMqttClientImpl(monitor, caChainCertPath, adminCertPath, adminKeyPath, null);
         } else {
-            mqttUsername = context.getSetting(MQTT_USERNAME_ENV, null);
-            mqttPassword = context.getSetting(MQTT_PASSWORD_ENV, null);
-            adminUsername = context.getSetting(MQTT_ADMIN_USERNAME_ENV, null);
-            adminPassword = context.getSetting(MQTT_ADMIN_PASSWORD_ENV, null);
+            var mqttUsername = context.getSetting(MQTT_USERNAME_ENV, null);
+            var mqttPassword = context.getSetting(MQTT_PASSWORD_ENV, null);
+            var adminUsername = context.getSetting(MQTT_ADMIN_USERNAME_ENV, null);
+            var adminPassword = context.getSetting(MQTT_ADMIN_PASSWORD_ENV, null);
 
             if (mqttUsername == null || mqttPassword == null || adminUsername == null || adminPassword == null) {
                 monitor.warning("Certificate-based authentication is disabled, but some required settings are missing. " +
@@ -142,10 +143,12 @@ public class OpcUaMqttExtension implements ServiceExtension {
             // Get the security service (may be null if broker not configured)
             var securityService = context.getService(MosquittoSecurityService.class, true);
 
+            PkiCertificateService pkiCertificateService = new PkiCertificateServiceImpl(pkiConfig, monitor);
+            context.registerService(PkiCertificateService.class, pkiCertificateService);
             // Create and register the data flow controller
             // The DataFlowController handles MQTT-PUSH transfers and stores EDR data
             OpcUaMqttDataFlowController flowController = new OpcUaMqttDataFlowController(
-                    pushService, brokerConfig, edrService, securityService, monitor);
+                    pushService, pkiCertificateService, brokerConfig, edrService, securityService, monitor);
             dataFlowManager.register(flowController);
             monitor.info("Registered OpcUaMqttDataFlowController with DataFlowManager for MQTT-PUSH transfers");
 
