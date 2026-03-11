@@ -1,9 +1,11 @@
-package org.eclipse.edc.opcuamqtt.security;
+package org.eclipse.edc.opcuamqtt.security.mqtt;
+
+import org.eclipse.edc.opcuamqtt.security.Credentials;
 
 /**
  * Represents credentials created for a Mosquitto user.
  */
-public class MosquittoCredentials {
+public class MosquittoCredentials extends Credentials {
     private final String username;
     private final String password;
     private final String roleName;

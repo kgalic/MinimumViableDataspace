@@ -15,7 +15,8 @@ import org.eclipse.edc.opcuamqtt.opcua.OpcUaClientImpl;
 import org.eclipse.edc.opcuamqtt.pki.PkiCertificateService;
 import org.eclipse.edc.opcuamqtt.pki.PkiCertificateServiceImpl;
 import org.eclipse.edc.opcuamqtt.pki.PkiConfig;
-import org.eclipse.edc.opcuamqtt.security.MosquittoSecurityService;
+import org.eclipse.edc.opcuamqtt.security.SecurityService;
+import org.eclipse.edc.opcuamqtt.security.mqtt.MqttSecurityServiceImpl;
 import org.eclipse.edc.runtime.metamodel.annotation.Inject;
 import org.eclipse.edc.spi.system.ServiceExtension;
 import org.eclipse.edc.spi.system.ServiceExtensionContext;
@@ -131,9 +132,9 @@ public class OpcUaMqttExtension implements ServiceExtension {
 
         if (brokerUrl != null && !brokerUrl.trim().isEmpty()) {
 
-            MosquittoSecurityService securityService = new org.eclipse.edc.opcuamqtt.security.MosquittoSecurityServiceImpl(brokerUrl, adminMqttClient, monitor);
-            context.registerService(MosquittoSecurityService.class, securityService);
-            monitor.info("Registered MosquittoSecurityService for dynamic user and role management");
+            MqttSecurityServiceImpl securityService = new MqttSecurityServiceImpl(brokerUrl, adminMqttClient, monitor);
+            context.registerService(SecurityService.class, securityService);
+            monitor.info("Registered SecurityService for dynamic user and role management");
         } else {
             monitor.warning("Mosquitto Dynamic Security service not initialized - broker URL not configured");
         }
@@ -141,7 +142,7 @@ public class OpcUaMqttExtension implements ServiceExtension {
         // Only register dataflow controller if we're in control plane (DataFlowManager available)
         if (dataFlowManager != null && webService != null) {
             // Get the security service (may be null if broker not configured)
-            var securityService = context.getService(MosquittoSecurityService.class, true);
+            var securityService = context.getService(SecurityService.class, true);
 
             PkiCertificateService pkiCertificateService = new PkiCertificateServiceImpl(pkiConfig, monitor);
             context.registerService(PkiCertificateService.class, pkiCertificateService);

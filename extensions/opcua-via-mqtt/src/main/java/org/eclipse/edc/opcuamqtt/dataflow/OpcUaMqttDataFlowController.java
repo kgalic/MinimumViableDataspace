@@ -8,8 +8,9 @@ import org.eclipse.edc.opcuamqtt.edr.MqttEdrService;
 import org.eclipse.edc.opcuamqtt.mqttpush.MqttBrokerConfig;
 import org.eclipse.edc.opcuamqtt.mqttpush.OpcUaMqttPushService;
 import org.eclipse.edc.opcuamqtt.pki.PkiCertificateService;
-import org.eclipse.edc.opcuamqtt.security.MosquittoCredentials;
-import org.eclipse.edc.opcuamqtt.security.MosquittoSecurityService;
+import org.eclipse.edc.opcuamqtt.security.SecurityService;
+import org.eclipse.edc.opcuamqtt.security.mqtt.MosquittoCredentials;
+import org.eclipse.edc.opcuamqtt.security.mqtt.MosquittoSecurityRequest;
 import org.eclipse.edc.policy.model.Policy;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.response.ResponseStatus;
@@ -28,14 +29,14 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
     private final OpcUaMqttPushService opcUaPushService;
     private final MqttBrokerConfig brokerConfig;
     private final MqttEdrService edrService;
-    private final MosquittoSecurityService securityService;
+    private final SecurityService securityService;
     private final PkiCertificateService pkiCertificateService;
     private final Monitor monitor;
 
     public OpcUaMqttDataFlowController(OpcUaMqttPushService opcUaPushService,
                                       MqttBrokerConfig brokerConfig,
                                       MqttEdrService edrService,
-                                      MosquittoSecurityService securityService,
+                                      SecurityService securityService,
                                       Monitor monitor) {
         this.opcUaPushService = opcUaPushService;
         this.brokerConfig = brokerConfig;
@@ -49,7 +50,7 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
                                        PkiCertificateService pkiCertificateService,
                                        MqttBrokerConfig brokerConfig,
                                        MqttEdrService edrService,
-                                       MosquittoSecurityService securityService,
+                                       SecurityService securityService,
                                        Monitor monitor) {
         this.opcUaPushService = opcUaPushService;
         this.brokerConfig = brokerConfig;
@@ -105,7 +106,12 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
         // Clean up Mosquitto user and role
         String username = "edc-user-" + transferId;
         String roleName = "edc-role-" + transferId;
-        var cleanupResult = securityService.removeUserAndRole(username, roleName);
+        monitor.info("Cleaning up Mosquitto user " + username + " and role " + roleName);
+        var revokeRequest = new MosquittoSecurityRequest();
+        revokeRequest.setUserName(username);
+        revokeRequest.setRoleName(roleName);
+        revokeRequest.setTopic(transferProcess.getAssetId());
+        var cleanupResult = securityService.revokeAccess(revokeRequest);
         if (cleanupResult.failed()) {
             monitor.warning("Failed to clean up Mosquitto user and role: " + cleanupResult.getFailureDetail());
         } else {
@@ -172,9 +178,12 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
                 return StatusResult.failure(ResponseStatus.FATAL_ERROR, "Failed to extract username from CSR");
             }
 
-            var credentialsResult = securityService.createUserWithPermissions(username, topicPattern, transferId);
+            var securityRequest = new MosquittoSecurityRequest();
+            securityRequest.setUserName(username);
+            securityRequest.setTopic(topicPattern);
+            securityRequest.setTransferId(transferId);
+            Result<MosquittoCredentials> credentialsResult = securityService.provisionAccess(securityRequest);
             var credentials = credentialsResult.getContent();
-
             var signedCertificate = pkiCertificateService.requestCertificate(csr, credentials.getUsername(), 365);
             var dataAddress = DataAddress.Builder.newInstance()
                     .type(OPCUAMQTT_TYPE)
@@ -195,7 +204,10 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
             return StatusResult.success(response);
 
         } else {
-            var credentialsResult = securityService.createUserWithPermissions(topicPattern, transferId);
+            var securityRequest = new MosquittoSecurityRequest();
+            securityRequest.setTopic(topicPattern);
+            securityRequest.setTransferId(transferId);
+            Result<MosquittoCredentials> credentialsResult = securityService.provisionAccess(securityRequest);
             var credentials = credentialsResult.getContent();
 
             // Return success response with MQTT broker details for EDR

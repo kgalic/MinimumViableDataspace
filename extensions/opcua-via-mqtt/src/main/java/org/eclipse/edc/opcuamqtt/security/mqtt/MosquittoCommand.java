@@ -1,4 +1,4 @@
-package org.eclipse.edc.opcuamqtt.security;
+package org.eclipse.edc.opcuamqtt.security.mqtt;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

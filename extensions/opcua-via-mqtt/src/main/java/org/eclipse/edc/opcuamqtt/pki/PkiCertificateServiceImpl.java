@@ -1,3 +1,4 @@
+
 package org.eclipse.edc.opcuamqtt.pki;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -7,7 +8,6 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.result.Result;
 
-import javax.security.auth.x500.X500Principal;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
@@ -16,6 +16,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Base64;
+import javax.security.auth.x500.X500Principal;
 
 public class PkiCertificateServiceImpl implements PkiCertificateService {
 
@@ -91,13 +92,13 @@ public class PkiCertificateServiceImpl implements PkiCertificateService {
     @Override
     public Result<String> getCommonName(String certificatePem) {
         try {
-            return Result.success(extractCommonNameFromCSR(certificatePem));
+            return Result.success(extractCommonNameFromCsr(certificatePem));
         } catch (Exception e) {
             return Result.failure("Failed to extract CN from certificate: " + e.getMessage());
         }
     }
 
-    public static String extractCommonNameFromCSR(String csrPem) throws Exception {
+    public static String extractCommonNameFromCsr(String csrPem) throws Exception {
         // Remove PEM headers and decode
         String csrContent = csrPem.replaceAll("-----BEGIN.*?-----", "")
                 .replaceAll("-----END.*?-----", "")
@@ -109,25 +110,23 @@ public class PkiCertificateServiceImpl implements PkiCertificateService {
         try {
             PKCS10CertificationRequest csr = new PKCS10CertificationRequest(csrBytes);
             X500Principal subject = new X500Principal(csr.getSubject().getEncoded());
-            return extractCNFromX500Principal(subject);
+            return extractCommonNameFromX500Principal(subject);
         } catch (Exception e) {
             // Alternative approach using PEM parser
-            try (StringReader stringReader = new StringReader(csrPem);
-                 PEMParser pemParser = new PEMParser(stringReader)) {
+            try (StringReader stringReader = new StringReader(csrPem); PEMParser pemParser = new PEMParser(stringReader)) {
 
                 PKCS10CertificationRequest csr = (PKCS10CertificationRequest) pemParser.readObject();
                 X500Principal subject = new X500Principal(csr.getSubject().getEncoded());
-                return extractCNFromX500Principal(subject);
+                return extractCommonNameFromX500Principal(subject);
             }
         }
     }
 
-
-    private static String extractCNFromX500Principal(X500Principal subject) {
-        String subjectDN = subject.getName();
+    private static String extractCommonNameFromX500Principal(X500Principal subject) {
+        String subjectDistinguishedName = subject.getName();
 
         // Parse the DN string to find CN
-        String[] dnComponents = subjectDN.split(",");
+        String[] dnComponents = subjectDistinguishedName.split(",");
         for (String component : dnComponents) {
             String trimmed = component.trim();
             if (trimmed.startsWith("CN=")) {
@@ -137,7 +136,6 @@ public class PkiCertificateServiceImpl implements PkiCertificateService {
 
         return null; // CN not found
     }
-
 
     // Request DTO
     private static class CertificateRequest {
