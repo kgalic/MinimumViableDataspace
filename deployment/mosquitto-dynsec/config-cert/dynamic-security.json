@@ -1,5 +1,5 @@
 {
-	"changeIndex":	36,
+	"changeIndex":	4,
 	"defaultACLAccess":	{
 		"publishClientSend":	false,
 		"publishClientReceive":	true,
@@ -15,42 +15,21 @@
 					"rolename":	"sys-observe"
 				}, {
 					"rolename":	"topic-observe"
-				}]
-		}, {
-			"username":	"consumer-client-392",
-			"roles":	[{
-					"rolename":	"edc-role-6fd3613f-26f5-4992-a9cb-abeac549eb9a"
 				}],
-			"encoded_password":	"$7$1000$sTrX2iMwjUyf89hStPu83XRSTUTYtHvfBws899HDxJqwL3tKFc3byJIY7Iz9tDh41ryS+S46r6iPlqOSZMRyXA==$U1orKrm1snZEFMpceKJ6NBcs1uMPRouAseZu9HvtXU+bkMMdLsg7iXOzluzSCCHpSfKNQ0Afyrk5PxFMoqCshA=="
+			"encoded_password":	"$7$1000$iDJMc9oWYY9xJVdQKOhl6ju8jaRob4KLDo4WsogwqP1gvpc3drf+80jYy1v0wJhwYenLyIA/p771a4QatWc78w==$EiSriVDfkVnqjy1CBf3ra8tVURBIlR2r6DY8sZfo9wgkt3AUzJ3bOnB5AyaujPL6joFpMZzWWHT2ow5d4+Wrbg=="
 		}, {
-			"username":	"edc-user-3ec1c67e-c934-425b-9daf-7dabf31fa0d8",
+			"username":	"democlient",
+			"textname":	"Demonstration client with full read/write access to the '#' topic hierarchy.",
 			"roles":	[{
-					"rolename":	"edc-role-3ec1c67e-c934-425b-9daf-7dabf31fa0d8"
+					"rolename":	"client"
 				}],
-			"encoded_password":	"$7$1000$jdcNnPWb+bRzcec2JTD0VY5Nxu6OotqsXHIV96Wm7B2zCBdA9fjvLK8rzPgVVBj61qx7iD227hBkSQCuQXB5sg==$srXlkMDZDSwoAj6D5X4yqmpWVmBJ5bIyi3OoE8Ah5Qz+SP6hovTrK19xNAXsCclO/RBfdgNUxlEsII1DpieK1w=="
-		}, {
-			"username":	"edc-user-5fa0bc5b-671b-4e38-aca3-8efdff022a0d",
-			"roles":	[{
-					"rolename":	"edc-role-5fa0bc5b-671b-4e38-aca3-8efdff022a0d"
-				}],
-			"encoded_password":	"$7$1000$KnUTajYnmWoM3igHrUYlN1kBD0OLW0X4t7NBIlHXiyMSisS069Wj8rVtOLRuFIVVP3XLT1zo7EfvYNBrMPUX8A==$G0Oyx+t9YG05J7wHvSQ4UL9WE+uwKGvEne9y0Fumo3WNQzIH8LZzj4n4BN5/d6S2NvoP92jMInw/DksCIb8AIw=="
-		}, {
-			"username":	"edc-user-705e8397-722d-44f3-8d95-ed4c8c4053b8",
-			"roles":	[{
-					"rolename":	"edc-role-705e8397-722d-44f3-8d95-ed4c8c4053b8"
-				}],
-			"encoded_password":	"$7$1000$kGJNe2crYK3QKpJjg6hT1P7dv/TwfT3p7/j8vJPU8/ZZq8p+gHdrf6mmfa6Oes8C6FBFmn46PS+l0qYebFlTKQ==$qODD+QzJyyuvayZSuvRqGMxB91sDrgPEDuldx6CH5CrTY71mjYbqkZT85vTqX+s8Gl6M2HXtfam+tf9E9JFClA=="
-		}, {
-			"username":	"edc-user-8e9fb079-74cf-4813-bbcb-74244bc9d388",
-			"roles":	[{
-					"rolename":	"edc-role-8e9fb079-74cf-4813-bbcb-74244bc9d388"
-				}],
-			"encoded_password":	"$7$1000$XVob1TDV6IctqB980k+jWHAzINgUpi03gn07PL9nd1/A9frmnLg1vUJiYNqNieNTsWPrgoxrKyNiTgqn+xEJkA==$vkOkdJN17buMMNH765Xzd6kU6Epqk9WYaoxDiPhHmrh3gJC1CkYLV3u6MrROCzPcOKlcPwOtTZBOa+OhXABvvg=="
+			"encoded_password":	"$7$1000$hgUAnei23HCDAxz1jAKPOzRcH/1DaEn9+3mEuI2AXKKFRHcHRQit3sguqKf++DsuussNDr1pBKiwFU+qmNZ3qQ==$WVKF1/WIAFewIlpJkAYVU4VLV9j5u8JkcNzHM/9K3YlgV53xNKOf0EgctNAdAepeFGIUOst6QAQL5gXk/8S0eg=="
 		}, {
 			"username":	"push-user",
 			"roles":	[{
 					"rolename":	"push-role"
-				}]
+				}],
+			"encoded_password":	"$7$1000$gfY4pWxd78e+szuf1SKpwX9TfVZCmxmbnSS9aiDaJsCjn8LhYAvU3GMYg/GYeR72zOTFSZRKrGD3sGPWijk54A==$xg3li6Ya/dgK+6MrJv1TiuojYDvIF1QMkAIk/sVhXUYtMBDn+CwtZgRneEZVdEFQ8oNDLUlZg93pjoaL3sRy4w=="
 		}],
 	"groups":	[{
 			"groupname":	"unauthenticated",
@@ -132,76 +111,6 @@
 				}, {
 					"acltype":	"unsubscribePattern",
 					"topic":	"$CONTROL/dynamic-security/#",
-					"priority":	0,
-					"allow":	true
-				}]
-		}, {
-			"rolename":	"edc-role-3ec1c67e-c934-425b-9daf-7dabf31fa0d8",
-			"allowwildcardsubs":	true,
-			"acls":	[{
-					"acltype":	"publishClientReceive",
-					"topic":	"opcuamqtt-machine-tool-qna/#",
-					"priority":	0,
-					"allow":	true
-				}, {
-					"acltype":	"subscribePattern",
-					"topic":	"opcuamqtt-machine-tool-qna/#",
-					"priority":	0,
-					"allow":	true
-				}]
-		}, {
-			"rolename":	"edc-role-5fa0bc5b-671b-4e38-aca3-8efdff022a0d",
-			"allowwildcardsubs":	true,
-			"acls":	[{
-					"acltype":	"publishClientReceive",
-					"topic":	"opcuamqtt-machine-tool-qna/#",
-					"priority":	0,
-					"allow":	true
-				}, {
-					"acltype":	"subscribePattern",
-					"topic":	"opcuamqtt-machine-tool-qna/#",
-					"priority":	0,
-					"allow":	true
-				}]
-		}, {
-			"rolename":	"edc-role-6fd3613f-26f5-4992-a9cb-abeac549eb9a",
-			"allowwildcardsubs":	true,
-			"acls":	[{
-					"acltype":	"publishClientReceive",
-					"topic":	"opcuamqtt-machine-tool-qna/#",
-					"priority":	0,
-					"allow":	true
-				}, {
-					"acltype":	"subscribePattern",
-					"topic":	"opcuamqtt-machine-tool-qna/#",
-					"priority":	0,
-					"allow":	true
-				}]
-		}, {
-			"rolename":	"edc-role-705e8397-722d-44f3-8d95-ed4c8c4053b8",
-			"allowwildcardsubs":	true,
-			"acls":	[{
-					"acltype":	"publishClientReceive",
-					"topic":	"opcuamqtt-machine-tool-qna/#",
-					"priority":	0,
-					"allow":	true
-				}, {
-					"acltype":	"subscribePattern",
-					"topic":	"opcuamqtt-machine-tool-qna/#",
-					"priority":	0,
-					"allow":	true
-				}]
-		}, {
-			"rolename":	"edc-role-8e9fb079-74cf-4813-bbcb-74244bc9d388",
-			"allowwildcardsubs":	true,
-			"acls":	[{
-					"acltype":	"publishClientReceive",
-					"topic":	"opcuamqtt-machine-tool-qna/#",
-					"priority":	0,
-					"allow":	true
-				}, {
-					"acltype":	"subscribePattern",
-					"topic":	"opcuamqtt-machine-tool-qna/#",
 					"priority":	0,
 					"allow":	true
 				}]

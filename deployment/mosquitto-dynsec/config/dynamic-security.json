@@ -1,5 +1,5 @@
 {
-	"changeIndex":	14,
+	"changeIndex":	4,
 	"defaultACLAccess":	{
 		"publishClientSend":	false,
 		"publishClientReceive":	true,
@@ -24,18 +24,6 @@
 					"rolename":	"client"
 				}],
 			"encoded_password":	"$7$1000$hgUAnei23HCDAxz1jAKPOzRcH/1DaEn9+3mEuI2AXKKFRHcHRQit3sguqKf++DsuussNDr1pBKiwFU+qmNZ3qQ==$WVKF1/WIAFewIlpJkAYVU4VLV9j5u8JkcNzHM/9K3YlgV53xNKOf0EgctNAdAepeFGIUOst6QAQL5gXk/8S0eg=="
-		}, {
-			"username":	"edc-user-919f9aac-f687-4fc2-a061-89ad5aef10a9",
-			"roles":	[{
-					"rolename":	"edc-role-919f9aac-f687-4fc2-a061-89ad5aef10a9"
-				}],
-			"encoded_password":	"$7$1000$HnQm/TcTgp4McPYChuTfQy/6E9XDDUTtKNH/T2OneiqFVAjSXlcStNxjolTRGCFq8Im7ZSJweAsdMKiDtXHPSQ==$W3nYZubLo0/pqkJSQHK9UCtTHbxBoSv9E1TEaKRgTWAceLCMrSa1AfCgVOvxbK9u5piMATarJkbR+hxo3bCzig=="
-		}, {
-			"username":	"edc-user-f5e6b4a6-1388-46d0-9031-eb67470a1e05",
-			"roles":	[{
-					"rolename":	"edc-role-f5e6b4a6-1388-46d0-9031-eb67470a1e05"
-				}],
-			"encoded_password":	"$7$1000$VwKgeL/6w8iwEmYGrOdLfDMzG8p2BK/0LF9REJWhZ2LtVMpL16x37cVvOX3lY1M2Lp7ENRhZPIRWbQsbMHBztQ==$oXDuM1GTp5gLZeQmgpGew4O8m0rXtajcGsliRPQ/oAH19tmsyl8YrQXx5OFPpa/VhudXaxUlKGWZ7mjJUTXkNw=="
 		}, {
 			"username":	"push-user",
 			"roles":	[{
@@ -123,34 +111,6 @@
 				}, {
 					"acltype":	"unsubscribePattern",
 					"topic":	"$CONTROL/dynamic-security/#",
-					"priority":	0,
-					"allow":	true
-				}]
-		}, {
-			"rolename":	"edc-role-919f9aac-f687-4fc2-a061-89ad5aef10a9",
-			"allowwildcardsubs":	true,
-			"acls":	[{
-					"acltype":	"publishClientReceive",
-					"topic":	"opcuamqtt-machine-tool-qna/#",
-					"priority":	0,
-					"allow":	true
-				}, {
-					"acltype":	"subscribePattern",
-					"topic":	"opcuamqtt-machine-tool-qna/#",
-					"priority":	0,
-					"allow":	true
-				}]
-		}, {
-			"rolename":	"edc-role-f5e6b4a6-1388-46d0-9031-eb67470a1e05",
-			"allowwildcardsubs":	true,
-			"acls":	[{
-					"acltype":	"publishClientReceive",
-					"topic":	"opcuamqtt-machine-tool-qna/#",
-					"priority":	0,
-					"allow":	true
-				}, {
-					"acltype":	"subscribePattern",
-					"topic":	"opcuamqtt-machine-tool-qna/#",
 					"priority":	0,
 					"allow":	true
 				}]

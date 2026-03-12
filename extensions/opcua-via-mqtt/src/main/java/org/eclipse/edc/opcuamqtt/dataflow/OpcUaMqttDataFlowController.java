@@ -4,7 +4,6 @@ import org.eclipse.edc.connector.controlplane.asset.spi.domain.Asset;
 import org.eclipse.edc.connector.controlplane.transfer.spi.flow.DataFlowController;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.DataFlowResponse;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.TransferProcess;
-import org.eclipse.edc.opcuamqtt.edr.MqttEdrService;
 import org.eclipse.edc.opcuamqtt.mqttpush.MqttBrokerConfig;
 import org.eclipse.edc.opcuamqtt.mqttpush.OpcUaMqttPushService;
 import org.eclipse.edc.opcuamqtt.pki.PkiCertificateService;
@@ -28,19 +27,16 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
     private static final String EDC_NAMESPACE = "https://w3id.org/edc/v0.0.1/ns/";
     private final OpcUaMqttPushService opcUaPushService;
     private final MqttBrokerConfig brokerConfig;
-    private final MqttEdrService edrService;
     private final SecurityService securityService;
     private final PkiCertificateService pkiCertificateService;
     private final Monitor monitor;
 
     public OpcUaMqttDataFlowController(OpcUaMqttPushService opcUaPushService,
                                       MqttBrokerConfig brokerConfig,
-                                      MqttEdrService edrService,
                                       SecurityService securityService,
                                       Monitor monitor) {
         this.opcUaPushService = opcUaPushService;
         this.brokerConfig = brokerConfig;
-        this.edrService = edrService;
         this.securityService = securityService;
         this.monitor = monitor;
         this.pkiCertificateService = null;
@@ -49,12 +45,10 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
     public OpcUaMqttDataFlowController(OpcUaMqttPushService opcUaPushService,
                                        PkiCertificateService pkiCertificateService,
                                        MqttBrokerConfig brokerConfig,
-                                       MqttEdrService edrService,
                                        SecurityService securityService,
                                        Monitor monitor) {
         this.opcUaPushService = opcUaPushService;
         this.brokerConfig = brokerConfig;
-        this.edrService = edrService;
         this.securityService = securityService;
         this.pkiCertificateService = pkiCertificateService;
         this.monitor = monitor;
@@ -118,8 +112,6 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
             monitor.info("Cleaned up Mosquitto user " + username + " and role " + roleName);
         }
 
-        // Clean up EDR entry when transfer is terminated
-        edrService.removeEdr(transferId);
         monitor.info("Removed MQTT EDR for transfer " + transferId);
         return StatusResult.success();
     }
@@ -194,9 +186,6 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
                     .property(EDC_NAMESPACE + "username", credentials.getUsername())
                     .build();
 
-            // Store the complete DataAddress in EDR
-            edrService.storeEdr(transferId, dataAddress);
-
             var response = DataFlowResponse.Builder.newInstance()
                     .dataAddress(dataAddress)
                     .build();
@@ -220,9 +209,6 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
                     .property(EDC_NAMESPACE + "username", credentials.getUsername())
                     .property(EDC_NAMESPACE + "password", credentials.getPassword())
                     .build();
-
-            // Store the complete DataAddress in EDR
-            edrService.storeEdr(transferId, dataAddress);
 
             var response = DataFlowResponse.Builder.newInstance()
                     .dataAddress(dataAddress)

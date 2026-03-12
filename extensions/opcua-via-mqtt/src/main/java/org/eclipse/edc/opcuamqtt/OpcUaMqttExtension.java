@@ -4,9 +4,6 @@ import org.eclipse.edc.connector.controlplane.transfer.spi.flow.DataFlowManager;
 import org.eclipse.edc.opcuamqtt.client.OpcUaMqttClient;
 import org.eclipse.edc.opcuamqtt.client.PahoOpcUaMqttClientImpl;
 import org.eclipse.edc.opcuamqtt.dataflow.OpcUaMqttDataFlowController;
-import org.eclipse.edc.opcuamqtt.edr.InMemoryMqttEdrService;
-import org.eclipse.edc.opcuamqtt.edr.MqttEdrApiController;
-import org.eclipse.edc.opcuamqtt.edr.MqttEdrService;
 import org.eclipse.edc.opcuamqtt.mqttpush.MqttBrokerConfig;
 import org.eclipse.edc.opcuamqtt.mqttpush.OpcUaMqttPushService;
 import org.eclipse.edc.opcuamqtt.mqttpush.OpcUaMqttPushServiceImpl;
@@ -124,10 +121,6 @@ public class OpcUaMqttExtension implements ServiceExtension {
         context.registerService(OpcUaMqttPushService.class, pushService);
         monitor.info("Registered OpcUaMqttPushService with provider-managed MQTT broker");
 
-        // Create and register the EDR service (acts as a cache for active transfers)
-        MqttEdrService edrService = new InMemoryMqttEdrService();
-        monitor.info("Registered MqttEdrService for caching active MQTT transfers");
-
         // Create and register Mosquitto Dynamic Security service
 
         if (brokerUrl != null && !brokerUrl.trim().isEmpty()) {
@@ -149,14 +142,9 @@ public class OpcUaMqttExtension implements ServiceExtension {
             // Create and register the data flow controller
             // The DataFlowController handles MQTT-PUSH transfers and stores EDR data
             OpcUaMqttDataFlowController flowController = new OpcUaMqttDataFlowController(
-                    pushService, pkiCertificateService, brokerConfig, edrService, securityService, monitor);
+                    pushService, pkiCertificateService, brokerConfig, securityService, monitor);
             dataFlowManager.register(flowController);
             monitor.info("Registered OpcUaMqttDataFlowController with DataFlowManager for MQTT-PUSH transfers");
-
-            // Register the EDR API controller for consumer queries
-            var edrController = new MqttEdrApiController(edrService, monitor);
-            webService.registerResource("default", edrController);
-            monitor.info("Registered MqttEdrApiController for serving MQTT EDR requests at /edr endpoint");
         } else {
             monitor.debug("DataFlowManager or WebService not available - running in dataplane-only mode");
         }
