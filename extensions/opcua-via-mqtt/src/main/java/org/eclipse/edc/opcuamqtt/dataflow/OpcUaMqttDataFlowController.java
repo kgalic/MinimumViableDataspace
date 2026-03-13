@@ -177,13 +177,15 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
             Result<MosquittoCredentials> credentialsResult = securityService.provisionAccess(securityRequest);
             var credentials = credentialsResult.getContent();
             var signedCertificate = pkiCertificateService.requestCertificate(csr, credentials.getUsername(), 365);
+            var caChain = pkiCertificateService.getCertificateChain();
             var dataAddress = DataAddress.Builder.newInstance()
                     .type(OPCUAMQTT_TYPE)
                     .property(EDC_NAMESPACE + "endpoint", brokerUrl)
                     .property(EDC_NAMESPACE + "authToken", authToken)
                     .property(EDC_NAMESPACE + "topic", assetId)
-                    .property(EDC_NAMESPACE + "certificate", signedCertificate.getContent())
                     .property(EDC_NAMESPACE + "username", credentials.getUsername())
+                    .property(EDC_NAMESPACE + "certificate", signedCertificate.getContent())
+                    .property(EDC_NAMESPACE + "ca-chain", caChain.getContent())
                     .build();
 
             var response = DataFlowResponse.Builder.newInstance()

@@ -1,5 +1,5 @@
 {
-	"changeIndex":	4,
+	"changeIndex":	14,
 	"defaultACLAccess":	{
 		"publishClientSend":	false,
 		"publishClientReceive":	true,
@@ -24,6 +24,18 @@
 					"rolename":	"client"
 				}],
 			"encoded_password":	"$7$1000$hgUAnei23HCDAxz1jAKPOzRcH/1DaEn9+3mEuI2AXKKFRHcHRQit3sguqKf++DsuussNDr1pBKiwFU+qmNZ3qQ==$WVKF1/WIAFewIlpJkAYVU4VLV9j5u8JkcNzHM/9K3YlgV53xNKOf0EgctNAdAepeFGIUOst6QAQL5gXk/8S0eg=="
+		}, {
+			"username":	"mqtt-user-005",
+			"roles":	[{
+					"rolename":	"edc-role-ea8543cc-d55a-4ca7-917a-650d1f21caf0"
+				}],
+			"encoded_password":	"$7$1000$6X63gB2V6yc9GjF4Za9Ntag8yJKrhZ9eZCoIBN08SXfhZEBRb5pwPpf4Tfh8r/xFdhDyMlkqQ6RDtKMK+2ZYSw==$y4q+D+7zSadKp3Cotu/16A7Z4qCt9C8wmZOFXGdQlgTxHRRGa4vDgJKXnV2Emqlo5Ofj7o0j8nrcDykBJnpwXQ=="
+		}, {
+			"username":	"mqtt-user-006",
+			"roles":	[{
+					"rolename":	"edc-role-7b9ff6e9-21f1-43ac-868c-21ecbe5f7daf"
+				}],
+			"encoded_password":	"$7$1000$V5Mx/K5Md0jDKIKfoaHKVCxvcjpHhYFbGkkV/17iWz+PjFo4EXp1FWy6LAHOsqm/ZZZeti5fOJo8DDXNH46Egw==$ZwHbTTEBXpifMN4nmR1ZtgcPe71DzycX5tEwtPJU8LXQ1a2ZVDfjVwouyg59SXbhUATonTGwxK2acEjkDKjvWg=="
 		}, {
 			"username":	"push-user",
 			"roles":	[{
@@ -111,6 +123,34 @@
 				}, {
 					"acltype":	"unsubscribePattern",
 					"topic":	"$CONTROL/dynamic-security/#",
+					"priority":	0,
+					"allow":	true
+				}]
+		}, {
+			"rolename":	"edc-role-7b9ff6e9-21f1-43ac-868c-21ecbe5f7daf",
+			"allowwildcardsubs":	true,
+			"acls":	[{
+					"acltype":	"publishClientReceive",
+					"topic":	"opcuamqtt-machine-tool-qna/#",
+					"priority":	0,
+					"allow":	true
+				}, {
+					"acltype":	"subscribePattern",
+					"topic":	"opcuamqtt-machine-tool-qna/#",
+					"priority":	0,
+					"allow":	true
+				}]
+		}, {
+			"rolename":	"edc-role-ea8543cc-d55a-4ca7-917a-650d1f21caf0",
+			"allowwildcardsubs":	true,
+			"acls":	[{
+					"acltype":	"publishClientReceive",
+					"topic":	"opcuamqtt-machine-tool-qna/#",
+					"priority":	0,
+					"allow":	true
+				}, {
+					"acltype":	"subscribePattern",
+					"topic":	"opcuamqtt-machine-tool-qna/#",
 					"priority":	0,
 					"allow":	true
 				}]

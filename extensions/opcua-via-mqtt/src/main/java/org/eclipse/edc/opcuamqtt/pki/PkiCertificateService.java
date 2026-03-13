@@ -18,6 +18,12 @@ public interface PkiCertificateService {
     Result<String> requestCertificate(String csrPem, String commonName, int validityDays);
 
     /**
+     * Retrieves the certificate chain from the PKI endpoint.
+     *
+     * @return Result containing the certificate chain in PEM format or failure details
+     */
+    Result<String> getCertificateChain();
+    /**
      * Retrieves the common name from a certificate.
      *
      * @param certificatePem the Certificate in PEM format

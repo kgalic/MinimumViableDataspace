@@ -90,6 +90,76 @@ public class PkiCertificateServiceImpl implements PkiCertificateService {
     }
 
     @Override
+    public Result<String> getCertificateChain() {
+        if (!pkiConfig.isValid()) {
+            return Result.failure("PKI configuration is invalid or incomplete");
+        }
+
+        try {
+            // Build the CA chain endpoint URL
+            String endpoint = pkiConfig.getEndpoint() + "/api/Pki/ca-chain";
+
+            // Build HTTP request
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(endpoint))
+                    .header("X-Api-Key", pkiConfig.getApiKey())
+                    .header("Content-Type", "application/json")
+                    .GET()
+                    .timeout(Duration.ofSeconds(60))
+                    .build();
+
+            monitor.debug("Requesting CA chain from PKI endpoint: " + endpoint);
+
+            // Send request
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                // Parse response
+                CaChainResponse caChainResponse = objectMapper.readValue(response.body(), CaChainResponse.class);
+
+                monitor.info("CA chain successfully obtained from PKI");
+
+                // Combine root and intermediate certificates into a single chain
+                StringBuilder chainBuilder = new StringBuilder();
+
+                // Add root certificate
+                if (caChainResponse.rootCertificate != null && !caChainResponse.rootCertificate.trim().isEmpty()) {
+                    chainBuilder.append(caChainResponse.rootCertificate.trim());
+                    if (!caChainResponse.rootCertificate.endsWith("\n")) {
+                        chainBuilder.append("\n");
+                    }
+                }
+
+                // Add intermediate certificate
+                if (caChainResponse.intermediateCertificate != null && !caChainResponse.intermediateCertificate.trim().isEmpty()) {
+                    chainBuilder.append(caChainResponse.intermediateCertificate.trim());
+                    if (!caChainResponse.intermediateCertificate.endsWith("\n")) {
+                        chainBuilder.append("\n");
+                    }
+                }
+
+                return Result.success(chainBuilder.toString());
+
+            } else {
+                monitor.warning("PKI CA chain request failed with status: " + response.statusCode());
+                monitor.warning("Response body: " + response.body());
+                return Result.failure("PKI CA chain request failed with status " + response.statusCode() + ": " + response.body());
+            }
+
+        } catch (IOException e) {
+            monitor.severe("IO error during PKI CA chain request", e);
+            return Result.failure("IO error: " + e.getMessage());
+        } catch (InterruptedException e) {
+            monitor.severe("PKI CA chain request was interrupted", e);
+            Thread.currentThread().interrupt();
+            return Result.failure("Request interrupted: " + e.getMessage());
+        } catch (Exception e) {
+            monitor.severe("Unexpected error during PKI CA chain request", e);
+            return Result.failure("Unexpected error: " + e.getMessage());
+        }
+    }
+
+    @Override
     public Result<String> getCommonName(String certificatePem) {
         try {
             return Result.success(extractCommonNameFromCsr(certificatePem));
@@ -168,5 +238,14 @@ public class PkiCertificateServiceImpl implements PkiCertificateService {
 
         @JsonProperty("expiresAt")
         public String expiresAt;
+    }
+
+    // Response DTO for CA Chain
+    private static class CaChainResponse {
+        @JsonProperty("rootCertificate")
+        public String rootCertificate;
+
+        @JsonProperty("intermediateCertificate")
+        public String intermediateCertificate;
     }
 }
