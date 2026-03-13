@@ -124,16 +124,20 @@ public class PkiCertificateServiceImpl implements PkiCertificateService {
 
                 // Add root certificate
                 if (caChainResponse.rootCertificate != null && !caChainResponse.rootCertificate.trim().isEmpty()) {
-                    chainBuilder.append(caChainResponse.rootCertificate.trim());
-                    if (!caChainResponse.rootCertificate.endsWith("\n")) {
+                    String rootCert = caChainResponse.rootCertificate.trim();
+                    chainBuilder.append(rootCert);
+                    // Always ensure there's a newline after the certificate
+                    if (!rootCert.endsWith("\n")) {
                         chainBuilder.append("\n");
                     }
                 }
 
                 // Add intermediate certificate
                 if (caChainResponse.intermediateCertificate != null && !caChainResponse.intermediateCertificate.trim().isEmpty()) {
-                    chainBuilder.append(caChainResponse.intermediateCertificate.trim());
-                    if (!caChainResponse.intermediateCertificate.endsWith("\n")) {
+                    String intermediateCert = caChainResponse.intermediateCertificate.trim();
+                    chainBuilder.append(intermediateCert);
+                    // Always ensure there's a newline after the certificate
+                    if (!intermediateCert.endsWith("\n")) {
                         chainBuilder.append("\n");
                     }
                 }

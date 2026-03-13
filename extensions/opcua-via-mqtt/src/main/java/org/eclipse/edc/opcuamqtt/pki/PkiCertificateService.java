@@ -23,6 +23,7 @@ public interface PkiCertificateService {
      * @return Result containing the certificate chain in PEM format or failure details
      */
     Result<String> getCertificateChain();
+
     /**
      * Retrieves the common name from a certificate.
      *
