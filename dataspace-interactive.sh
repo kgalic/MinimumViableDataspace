@@ -24,6 +24,10 @@ CONSUMER_MANAGEMENT="http://localhost:8081"
 PROVIDER_QNA_MANAGEMENT="http://localhost:8191"
 PROVIDER_QNA_DSP="http://localhost:8192"
 
+# PKI Service URL (based on Postman collection)
+PKI_SERVICE="http://localhost:5198"
+PKI_API_KEY="ff94fd70-7f06-45ed-98af-046abf99600d"
+
 # IDs and other environment variables (defaults from Postman environment)
 CONSUMER_ID="did:web:localhost%3A7083"
 PROVIDER_ID="did:web:localhost%3A7093"
@@ -36,6 +40,7 @@ FULL_POLICY=""
 CONTRACT_NEGOTIATION_ID=""
 CONTRACT_AGREEMENT_ID=""
 TRANSFER_PROCESS_ID=""
+CSR_PEM=""
 
 # Color codes for output
 RED='\033[0;31m'
@@ -122,7 +127,7 @@ start_dataspace() {
 
     # Start docker compose
     log_info "Building and starting services..."
-    docker-compose -f docker-compose.dataspace.yml up -d
+    docker-compose -f docker-compose.dataspace.yml --profile tls up -d
 
     cd "$SCRIPT_DIR"
     echo $SCRIPT_DIR
@@ -153,6 +158,99 @@ run_seed_script() {
         return 0
     else
         echo "✗ Seed script failed"
+        return 1
+    fi
+}
+
+################################################################################
+# PKI Operations
+################################################################################
+
+# Create Self-Signed Certificate
+create_self_signed_certificate() {
+    log_info "Creating self-signed certificate..."
+
+    # Prompt user for common name
+    read -p "Enter Common Name (CN): " common_name
+    if [ -z "$common_name" ]; then
+        log_error "Common Name is required"
+        return 1
+    fi
+
+    # Prompt user for country
+    read -p "Enter Country (C): " country
+    if [ -z "$country" ]; then
+        log_error "Country is required"
+        return 1
+    fi
+
+    local request_body='{
+        "commonName": "'$common_name'",
+        "country": "'$country'",
+        "validForDays": 365,
+        "keySize": 4096,
+        "persist": true
+    }'
+
+    # Assuming self-signed cert endpoint is similar to CSR but with different path
+    local response=$(curl -s -X POST \
+        -H "$HEADER_CONTENT_TYPE" \
+        -H "x-api-key: $PKI_API_KEY" \
+        -d "$request_body" \
+        "$PKI_SERVICE/api/ClientPki/self-signed-certificate")
+
+    echo ""
+    pretty_json "$response"
+
+    # Check if certificate was created successfully
+    if echo "$response" | jq -e '.certificatePem' > /dev/null 2>&1; then
+        log_success "Self-signed certificate created successfully"
+
+        local cert_pem=$(echo "$response" | jq -r '.certificatePem')
+        log_info "Certificate PEM has been generated"
+
+        # Optionally save to environment or file
+        echo "$cert_pem" > "${SCRIPT_DIR}/generated_certificate.pem"
+        log_success "Certificate saved to generated_certificate.pem"
+    else
+        log_error "Failed to create self-signed certificate"
+        return 1
+    fi
+}
+
+# Create CSR (Certificate Signing Request)
+# Create CSR (Certificate Signing Request)
+# Create CSR (Certificate Signing Request)
+create_csr() {
+    log_info "Creating Certificate Signing Request (CSR)..."
+
+    local response=$(curl -s -X POST \
+        -H "$HEADER_CONTENT_TYPE" \
+        -H "x-api-key: $PKI_API_KEY" \
+        -d "" \
+        "$PKI_SERVICE/api/ClientPki/csr")
+
+    echo ""
+    pretty_json "$response"
+
+    # Extract CSR PEM for use in transfer request
+    if echo "$response" | jq -e '.csrPem' > /dev/null 2>&1; then
+        local csr_pem=$(echo "$response" | jq -r '.csrPem')
+
+        # Use jq to properly escape the CSR for JSON - this is the most reliable method
+        CSR_PEM=$(echo "$response" | jq -r '.csrPem | @json' | sed 's/^"//;s/"$//')
+
+        log_success "CSR created successfully"
+        log_info "CSR PEM has been stored for transfer requests"
+
+        # Optionally save to file
+        echo "$csr_pem" > "${SCRIPT_DIR}/generated_csr.pem"
+        log_success "CSR saved to generated_csr.pem"
+
+        # Show a preview of the escaped CSR
+        log_info "Escaped CSR preview: ${CSR_PEM:0:50}..."
+    else
+        log_error "Failed to create CSR"
         return 1
     fi
 }
@@ -293,22 +391,46 @@ initiate_transfer() {
     log_info "Contract Agreement ID: $CONTRACT_AGREEMENT_ID"
     log_info "Asset ID: $ASSET_ID"
 
-    local request_body='{
-        "@context": [
-            "https://w3id.org/edc/connector/management/v0.0.1"
-        ],
-        "@type": "TransferRequest",
-        "counterPartyAddress": "'$PROVIDER_QNA_DSP_INTERNAL'/api/dsp",
-        "contractId": "'$CONTRACT_AGREEMENT_ID'",
-        "assetId": "'$ASSET_ID'",
-        "protocol": "dataspace-protocol-http",
-        "transferType": "MQTT-PUSH",
-        "callbackAddresses": [],
-        "dataDestination": {
-            "@type": "DataAddress",
-            "type": "MQTT"
-        }
-    }'
+    # Build request body based on whether CSR is available
+    local request_body
+    if [ -n "$CSR_PEM" ]; then
+        log_info "Using CSR for transfer request"
+        request_body='{
+            "@context": [
+                "https://w3id.org/edc/connector/management/v0.0.1"
+            ],
+            "@type": "TransferRequest",
+            "counterPartyAddress": "'$PROVIDER_QNA_DSP_INTERNAL'/api/dsp",
+            "contractId": "'$CONTRACT_AGREEMENT_ID'",
+            "assetId": "'$ASSET_ID'",
+            "protocol": "dataspace-protocol-http",
+            "transferType": "MQTT-PUSH",
+            "callbackAddresses": [],
+            "dataDestination": {
+                "@type": "DataAddress",
+                "type": "MQTT",
+                "csr": "'$CSR_PEM'"
+            }
+        }'
+    else
+        log_info "Using standard transfer request (no CSR)"
+        request_body='{
+            "@context": [
+                "https://w3id.org/edc/connector/management/v0.0.1"
+            ],
+            "@type": "TransferRequest",
+            "counterPartyAddress": "'$PROVIDER_QNA_DSP_INTERNAL'/api/dsp",
+            "contractId": "'$CONTRACT_AGREEMENT_ID'",
+            "assetId": "'$ASSET_ID'",
+            "protocol": "dataspace-protocol-http",
+            "transferType": "MQTT-PUSH",
+            "callbackAddresses": [],
+            "dataDestination": {
+                "@type": "DataAddress",
+                "type": "MQTT"
+            }
+        }'
+    fi
 
     local response=$(curl -s -X POST \
         -H "$HEADER_CONTENT_TYPE" \
@@ -381,8 +503,10 @@ show_menu() {
     echo "3. Check Contract Negotiation Status"
     echo "4. Initiate Transfer"
     echo "5. Get EDR Endpoint"
-    echo "6. Show Current Status"
-    echo "7. Exit"
+    echo "6. Create Self-Signed Certificate"
+    echo "7. Create CSR (Certificate Signing Request)"
+    echo "8. Show Current Status"
+    echo "9. Exit"
     echo "================================"
     echo ""
 }
@@ -395,13 +519,14 @@ show_status() {
     echo "  Contract Negotiation ID: ${CONTRACT_NEGOTIATION_ID:-(not set)}"
     echo "  Contract Agreement ID: ${CONTRACT_AGREEMENT_ID:-(not set)}"
     echo "  Transfer Process ID: ${TRANSFER_PROCESS_ID:-(not set)}"
+    echo "  CSR Available: ${CSR_PEM:+Yes (ready for transfer)}"
     echo ""
 }
 
 interactive_menu() {
     while true; do
         show_menu
-        read -p "Select an option [1-7]: " choice
+        read -p "Select an option [1-9]: " choice
 
         case $choice in
             1)
@@ -420,14 +545,20 @@ interactive_menu() {
                 get_edr_endpoint
                 ;;
             6)
-                show_status
+                create_self_signed_certificate
                 ;;
             7)
+                create_csr
+                ;;
+            8)
+                show_status
+                ;;
+            9)
                 log_info "Exiting interactive menu"
                 break
                 ;;
             *)
-                log_error "Invalid option. Please select 1-7."
+                log_error "Invalid option. Please select 1-9."
                 ;;
         esac
     done
@@ -483,4 +614,3 @@ main() {
 
 # Run main function
 main
-

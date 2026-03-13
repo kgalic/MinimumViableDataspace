@@ -108,6 +108,7 @@ services:
       - "12001:12001"
     volumes:
       - ./assets:/app/deployment/assets:ro
+      - ./mosquitto-dynsec/certs:/mosquitto/certs:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
       - "localhost:host-gateway"
@@ -187,7 +188,6 @@ services:
       profiles: [ "tls" ]
       restart: unless-stopped
       ports:
-        - "1883:1883"
         - "8883:8883"
       volumes:
         - ./mosquitto-dynsec/config-cert:/mosquitto/config
