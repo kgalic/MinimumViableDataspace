@@ -2,9 +2,9 @@ package org.eclipse.edc.opcuamqtt.opcua;
 
 /**
  * Client interface for reading values from OPC UA servers.
- * This is a self-contained client specific to the MQTT extension.
+ * This is a self-contained mqttclient specific to the MQTT extension.
  */
-public interface MqttOpcUaClient {
+public interface OpcUaClientService {
 
     /**
      * Read a single value from an OPC UA server.

@@ -1,7 +1,6 @@
-package org.eclipse.edc.opcuamqtt.client;
+package org.eclipse.edc.opcuamqtt.mqttclient;
 
 import org.eclipse.edc.spi.monitor.Monitor;
-import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 
@@ -36,10 +35,10 @@ import javax.net.ssl.TrustManagerFactory;
  * Manages connection lifecycle internally with connection pooling.
  * Supports both username/password and certificate-based authentication.
  */
-public class PahoOpcUaMqttClientImpl implements OpcUaMqttClient {
+public class PahoMqttClientImpl implements MqttClient {
 
     private final Monitor monitor;
-    private final ConcurrentHashMap<String, MqttClient> clientCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, org.eclipse.paho.client.mqttv3.MqttClient> clientCache = new ConcurrentHashMap<>();
 
     // Certificate authentication fields
     private final String caCertPath;
@@ -54,7 +53,7 @@ public class PahoOpcUaMqttClientImpl implements OpcUaMqttClient {
     /**
      * Constructor for basic usage without pre-configured authentication
      */
-    public PahoOpcUaMqttClientImpl(Monitor monitor) {
+    public PahoMqttClientImpl(Monitor monitor) {
         this.monitor = monitor;
         this.caCertPath = null;
         this.clientCertPath = null;
@@ -71,7 +70,7 @@ public class PahoOpcUaMqttClientImpl implements OpcUaMqttClient {
      * @param username Username for MQTT broker authentication
      * @param password Password for MQTT broker authentication
      */
-    public PahoOpcUaMqttClientImpl(Monitor monitor, String username, String password) {
+    public PahoMqttClientImpl(Monitor monitor, String username, String password) {
         this.monitor = monitor;
         this.caCertPath = null;
         this.clientCertPath = null;
@@ -89,7 +88,7 @@ public class PahoOpcUaMqttClientImpl implements OpcUaMqttClient {
      * @param clientCertPath Path to client certificate file (PEM format)
      * @param clientKeyPath Path to client private key file (PEM format)
      */
-    public PahoOpcUaMqttClientImpl(Monitor monitor, String caCertPath, String clientCertPath, String clientKeyPath) {
+    public PahoMqttClientImpl(Monitor monitor, String caCertPath, String clientCertPath, String clientKeyPath) {
         this.monitor = monitor;
         this.caCertPath = caCertPath;
         this.clientCertPath = clientCertPath;
@@ -108,8 +107,8 @@ public class PahoOpcUaMqttClientImpl implements OpcUaMqttClient {
      * @param clientKeyPath Path to client private key file (PEM format)
      * @param clientKeyPassword Password for the private key (can be null)
      */
-    public PahoOpcUaMqttClientImpl(Monitor monitor, String caCertPath, String clientCertPath,
-                                   String clientKeyPath, String clientKeyPassword) {
+    public PahoMqttClientImpl(Monitor monitor, String caCertPath, String clientCertPath,
+                              String clientKeyPath, String clientKeyPassword) {
         this.monitor = monitor;
         this.caCertPath = caCertPath;
         this.clientCertPath = clientCertPath;
@@ -136,7 +135,7 @@ public class PahoOpcUaMqttClientImpl implements OpcUaMqttClient {
         String effectiveUsername = (username != null) ? username : this.username;
         String effectivePassword = (password != null) ? password : this.password;
 
-        MqttClient client = getOrCreateClient(brokerUrl, effectiveUsername, effectivePassword);
+        org.eclipse.paho.client.mqttv3.MqttClient client = getOrCreateClient(brokerUrl, effectiveUsername, effectivePassword);
 
         try {
             org.eclipse.paho.client.mqttv3.MqttMessage mqttMessage = new org.eclipse.paho.client.mqttv3.MqttMessage(payload);
@@ -167,7 +166,7 @@ public class PahoOpcUaMqttClientImpl implements OpcUaMqttClient {
 
         if (isCertificateAuthConfigured()) {
             // Use certificate-based authentication
-            MqttClient client = getOrCreateClient(brokerUrl, null, null);
+            org.eclipse.paho.client.mqttv3.MqttClient client = getOrCreateClient(brokerUrl, null, null);
 
             try {
                 org.eclipse.paho.client.mqttv3.MqttMessage mqttMessage = new org.eclipse.paho.client.mqttv3.MqttMessage(payload);
@@ -202,7 +201,7 @@ public class PahoOpcUaMqttClientImpl implements OpcUaMqttClient {
         String effectiveUsername = (username != null) ? username : this.username;
         String effectivePassword = (password != null) ? password : this.password;
 
-        MqttClient client = getOrCreateClient(brokerUrl, effectiveUsername, effectivePassword);
+        org.eclipse.paho.client.mqttv3.MqttClient client = getOrCreateClient(brokerUrl, effectiveUsername, effectivePassword);
 
         try {
             client.subscribe(topic, 1); // QoS 1 for at least once delivery
@@ -224,7 +223,7 @@ public class PahoOpcUaMqttClientImpl implements OpcUaMqttClient {
 
         if (isCertificateAuthConfigured()) {
             // Use certificate-based authentication
-            MqttClient client = getOrCreateClient(brokerUrl, null, null);
+            org.eclipse.paho.client.mqttv3.MqttClient client = getOrCreateClient(brokerUrl, null, null);
 
             try {
                 client.subscribe(topic, 1); // QoS 1 for at least once delivery
@@ -255,7 +254,7 @@ public class PahoOpcUaMqttClientImpl implements OpcUaMqttClient {
         String effectiveUsername = (username != null) ? username : this.username;
         String effectivePassword = (password != null) ? password : this.password;
 
-        MqttClient client = getOrCreateClient(brokerUrl, effectiveUsername, effectivePassword);
+        org.eclipse.paho.client.mqttv3.MqttClient client = getOrCreateClient(brokerUrl, effectiveUsername, effectivePassword);
 
         try {
             client.setCallback(callback);
@@ -277,7 +276,7 @@ public class PahoOpcUaMqttClientImpl implements OpcUaMqttClient {
 
         if (isCertificateAuthConfigured()) {
             // Use certificate-based authentication
-            MqttClient client = getOrCreateClient(brokerUrl, null, null);
+            org.eclipse.paho.client.mqttv3.MqttClient client = getOrCreateClient(brokerUrl, null, null);
 
             try {
                 client.setCallback(callback);
@@ -301,7 +300,7 @@ public class PahoOpcUaMqttClientImpl implements OpcUaMqttClient {
             throw new IllegalArgumentException("Broker URL must not be null/blank");
         }
 
-        MqttClient client = clientCache.get(brokerUrl);
+        org.eclipse.paho.client.mqttv3.MqttClient client = clientCache.get(brokerUrl);
         if (client != null) {
             try {
                 if (client.isConnected()) {
@@ -321,11 +320,11 @@ public class PahoOpcUaMqttClientImpl implements OpcUaMqttClient {
     /**
      * Gets or creates an MQTT client for the given broker URL, reusing connections.
      */
-    private MqttClient getOrCreateClient(String brokerUrl, String username, String password) throws MqttException {
+    private org.eclipse.paho.client.mqttv3.MqttClient getOrCreateClient(String brokerUrl, String username, String password) throws MqttException {
         return clientCache.computeIfAbsent(brokerUrl, url -> {
             try {
                 String clientId = "edc-opcua-mqtt-" + System.nanoTime();
-                MqttClient client = new MqttClient(url, clientId);
+                org.eclipse.paho.client.mqttv3.MqttClient client = new org.eclipse.paho.client.mqttv3.MqttClient(url, clientId);
 
                 MqttConnectOptions options = new MqttConnectOptions();
                 options.setCleanSession(true);

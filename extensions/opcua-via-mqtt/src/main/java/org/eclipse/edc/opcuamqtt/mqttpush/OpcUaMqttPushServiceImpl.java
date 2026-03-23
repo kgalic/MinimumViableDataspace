@@ -1,7 +1,7 @@
 package org.eclipse.edc.opcuamqtt.mqttpush;
 
-import org.eclipse.edc.opcuamqtt.client.OpcUaMqttClient;
-import org.eclipse.edc.opcuamqtt.opcua.MqttOpcUaClient;
+import org.eclipse.edc.opcuamqtt.mqttclient.MqttClient;
+import org.eclipse.edc.opcuamqtt.opcua.OpcUaClientService;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.types.domain.DataAddress;
 
@@ -37,12 +37,12 @@ public class OpcUaMqttPushServiceImpl implements OpcUaMqttPushService {
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
 
-    private final MqttOpcUaClient opcUaClient;
-    private final OpcUaMqttClient mqttClient;
+    private final OpcUaClientService opcUaClient;
+    private final MqttClient mqttClient;
     private final MqttBrokerConfig brokerConfig;
     private final Monitor monitor;
 
-    public OpcUaMqttPushServiceImpl(MqttOpcUaClient opcUaClient, OpcUaMqttClient mqttClient,
+    public OpcUaMqttPushServiceImpl(OpcUaClientService opcUaClient, MqttClient mqttClient,
                                     MqttBrokerConfig brokerConfig, Monitor monitor) {
         this.opcUaClient = opcUaClient;
         this.mqttClient = mqttClient;

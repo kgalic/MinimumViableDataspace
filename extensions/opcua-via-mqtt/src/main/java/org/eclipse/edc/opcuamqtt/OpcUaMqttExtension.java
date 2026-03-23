@@ -1,17 +1,17 @@
 package org.eclipse.edc.opcuamqtt;
 
 import org.eclipse.edc.connector.controlplane.transfer.spi.flow.DataFlowManager;
-import org.eclipse.edc.opcuamqtt.client.OpcUaMqttClient;
-import org.eclipse.edc.opcuamqtt.client.PahoOpcUaMqttClientImpl;
 import org.eclipse.edc.opcuamqtt.dataflow.OpcUaMqttDataFlowController;
+import org.eclipse.edc.opcuamqtt.mqttclient.MqttClient;
+import org.eclipse.edc.opcuamqtt.mqttclient.PahoMqttClientImpl;
 import org.eclipse.edc.opcuamqtt.mqttpush.MqttBrokerConfig;
 import org.eclipse.edc.opcuamqtt.mqttpush.OpcUaMqttPushService;
 import org.eclipse.edc.opcuamqtt.mqttpush.OpcUaMqttPushServiceImpl;
-import org.eclipse.edc.opcuamqtt.opcua.MqttOpcUaClient;
-import org.eclipse.edc.opcuamqtt.opcua.OpcUaClientImpl;
+import org.eclipse.edc.opcuamqtt.opcua.OpcUaClientService;
+import org.eclipse.edc.opcuamqtt.opcua.OpcUaClientServiceImpl;
 import org.eclipse.edc.opcuamqtt.pki.PkiCertificateService;
-import org.eclipse.edc.opcuamqtt.pki.PkiCertificateServiceImpl;
-import org.eclipse.edc.opcuamqtt.pki.PkiConfig;
+import org.eclipse.edc.opcuamqtt.pki.custom.PkiCertificateServiceImpl;
+import org.eclipse.edc.opcuamqtt.pki.custom.PkiConfig;
 import org.eclipse.edc.opcuamqtt.security.SecurityService;
 import org.eclipse.edc.opcuamqtt.security.mqtt.MqttSecurityServiceImpl;
 import org.eclipse.edc.runtime.metamodel.annotation.Inject;
@@ -53,15 +53,15 @@ public class OpcUaMqttExtension implements ServiceExtension {
 
         // Create internal OPC UA client - no dependencies on other extensions
         MqttOpcUaClient opcUaClient = new OpcUaClientImpl(monitor);
-        context.registerService(MqttOpcUaClient.class, opcUaClient);
-        monitor.info("Registered internal MqttOpcUaClient for MQTT extension");
+        context.registerService(OpcUaClientService.class, opcUaClient);
+        monitor.info("Registered internal OpcUaClientService for MQTT extension");
 
         // Load MQTT broker configuration from EDC settings (environment variables, system properties, or config files)
         monitor.info("Reading MQTT broker configuration from EDC settings...");
         String brokerUrl = context.getSetting(MQTT_BROKER_URL_ENV, null);
 
-        OpcUaMqttClient pushMqttClient = null;
-        OpcUaMqttClient adminMqttClient = null;
+        MqttClient pushMqttClient = null;
+        MqttClient adminMqttClient = null;
         MqttBrokerConfig brokerConfig = null;
         PkiConfig pkiConfig = null;
 
@@ -85,8 +85,8 @@ public class OpcUaMqttExtension implements ServiceExtension {
 
             pkiConfig = new PkiConfig(pkiEndpoint, pkiKey);
             brokerConfig = new MqttBrokerConfig(brokerUrl, caChainCertPath, pushUserCertPath, pushUserKeyPath, null);
-            pushMqttClient = new PahoOpcUaMqttClientImpl(monitor, caChainCertPath, pushUserCertPath, pushUserKeyPath);
-            adminMqttClient = new PahoOpcUaMqttClientImpl(monitor, caChainCertPath, adminCertPath, adminKeyPath, null);
+            pushMqttClient = new PahoMqttClientImpl(monitor, caChainCertPath, pushUserCertPath, pushUserKeyPath);
+            adminMqttClient = new PahoMqttClientImpl(monitor, caChainCertPath, adminCertPath, adminKeyPath, null);
         } else {
             var mqttUsername = context.getSetting(MQTT_USERNAME_ENV, null);
             var mqttPassword = context.getSetting(MQTT_PASSWORD_ENV, null);
@@ -100,14 +100,14 @@ public class OpcUaMqttExtension implements ServiceExtension {
             }
 
             brokerConfig = new MqttBrokerConfig(brokerUrl, mqttUsername, mqttPassword);
-            pushMqttClient = new PahoOpcUaMqttClientImpl(monitor, mqttUsername, mqttPassword);
-            adminMqttClient = new PahoOpcUaMqttClientImpl(monitor, adminUsername, adminPassword);
+            pushMqttClient = new PahoMqttClientImpl(monitor, mqttUsername, mqttPassword);
+            adminMqttClient = new PahoMqttClientImpl(monitor, adminUsername, adminPassword);
         }
         monitor.info("MqttBrokerConfig created: " + brokerConfig);
 
-        // Create MQTT client implementation
-        context.registerService(OpcUaMqttClient.class, pushMqttClient);
-        monitor.info("Registered OpcUaMqttClient (Paho implementation)");
+        // Create MQTT mqttclient implementation
+        context.registerService(MqttClient.class, pushMqttClient);
+        monitor.info("Registered MqttClient (Paho implementation)");
 
         if (brokerUrl == null || brokerUrl.trim().isEmpty()) {
             monitor.warning("MQTT broker URL not configured. Set '" + MQTT_BROKER_URL_ENV + "' configuration. " +

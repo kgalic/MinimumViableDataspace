@@ -1,10 +1,11 @@
 
-package org.eclipse.edc.opcuamqtt.pki;
+package org.eclipse.edc.opcuamqtt.pki.custom;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
+import org.eclipse.edc.opcuamqtt.pki.PkiCertificateService;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.result.Result;
 

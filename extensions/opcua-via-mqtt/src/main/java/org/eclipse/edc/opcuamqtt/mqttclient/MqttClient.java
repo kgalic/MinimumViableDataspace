@@ -1,5 +1,5 @@
 
-package org.eclipse.edc.opcuamqtt.client;
+package org.eclipse.edc.opcuamqtt.mqttclient;
 
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 
@@ -7,7 +7,7 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
  * MQTT client abstraction used for both publishing and subscribing to MQTT messages.
  * Implementations are responsible for handling connection lifecycle internally.
  */
-public interface OpcUaMqttClient {
+public interface MqttClient {
 
     /**
      * Publishes the given payload to the specified topic on the given broker URL.

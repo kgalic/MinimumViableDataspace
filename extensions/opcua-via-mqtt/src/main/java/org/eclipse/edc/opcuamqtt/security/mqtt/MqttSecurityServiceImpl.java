@@ -1,7 +1,7 @@
 package org.eclipse.edc.opcuamqtt.security.mqtt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eclipse.edc.opcuamqtt.client.OpcUaMqttClient;
+import org.eclipse.edc.opcuamqtt.mqttclient.MqttClient;
 import org.eclipse.edc.opcuamqtt.security.SecurityService;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.result.Result;
@@ -26,12 +26,12 @@ public class MqttSecurityServiceImpl implements SecurityService<MosquittoCredent
     private static final String RESPONSE_TOPIC = "$CONTROL/dynamic-security/v1/response";
     private static final int RESPONSE_TIMEOUT_SECONDS = 10;
 
-    private final OpcUaMqttClient mqttClient;
+    private final MqttClient mqttClient;
     private final String brokerUrl;
     private final Monitor monitor;
     private final ObjectMapper objectMapper;
 
-    public MqttSecurityServiceImpl(String brokerUrl, OpcUaMqttClient mqttClient, Monitor monitor) {
+    public MqttSecurityServiceImpl(String brokerUrl, MqttClient mqttClient, Monitor monitor) {
         this.mqttClient = mqttClient;
         this.monitor = monitor;
         this.brokerUrl = brokerUrl;
@@ -175,7 +175,7 @@ public class MqttSecurityServiceImpl implements SecurityService<MosquittoCredent
         }
     }
 
-    private void publishCommand(OpcUaMqttClient client, MosquittoCommand.Command command) throws Exception {
+    private void publishCommand(MqttClient client, MosquittoCommand.Command command) throws Exception {
         MosquittoCommand wrapper = new MosquittoCommand(List.of(command));
         String json = objectMapper.writeValueAsString(wrapper);
 

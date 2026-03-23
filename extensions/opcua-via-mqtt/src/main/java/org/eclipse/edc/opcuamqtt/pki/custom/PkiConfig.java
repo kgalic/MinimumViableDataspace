@@ -1,4 +1,4 @@
-package org.eclipse.edc.opcuamqtt.pki;
+package org.eclipse.edc.opcuamqtt.pki.custom;
 
 /**
  * Configuration for PKI certificate service.
