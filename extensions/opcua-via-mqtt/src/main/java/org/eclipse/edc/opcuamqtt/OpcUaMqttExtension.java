@@ -52,7 +52,7 @@ public class OpcUaMqttExtension implements ServiceExtension {
         monitor.info("Initializing OPC UA MQTT Extension");
 
         // Create internal OPC UA client - no dependencies on other extensions
-        MqttOpcUaClient opcUaClient = new OpcUaClientImpl(monitor);
+        OpcUaClientService opcUaClient = new OpcUaClientServiceImpl(monitor);
         context.registerService(OpcUaClientService.class, opcUaClient);
         monitor.info("Registered internal OpcUaClientService for MQTT extension");
 
