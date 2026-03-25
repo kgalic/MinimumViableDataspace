@@ -4,6 +4,7 @@ import org.eclipse.edc.connector.controlplane.asset.spi.domain.Asset;
 import org.eclipse.edc.connector.controlplane.transfer.spi.flow.DataFlowController;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.DataFlowResponse;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.TransferProcess;
+import org.eclipse.edc.industrial.wss.IndustrialWebSocketService;
 import org.eclipse.edc.opcuamqtt.mqttpush.MqttBrokerConfig;
 import org.eclipse.edc.opcuamqtt.mqttpush.OpcUaMqttPushService;
 import org.eclipse.edc.opcuamqtt.pki.PkiCertificateService;
@@ -30,6 +31,7 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
     private final SecurityService securityService;
     private final PkiCertificateService pkiCertificateService;
     private final Monitor monitor;
+    private IndustrialWebSocketService webSocketService;
 
     public OpcUaMqttDataFlowController(OpcUaMqttPushService opcUaPushService,
                                       MqttBrokerConfig brokerConfig,
@@ -40,6 +42,7 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
         this.securityService = securityService;
         this.monitor = monitor;
         this.pkiCertificateService = null;
+        this.webSocketService = null;
     }
 
     public OpcUaMqttDataFlowController(OpcUaMqttPushService opcUaPushService,
@@ -51,7 +54,13 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
         this.brokerConfig = brokerConfig;
         this.securityService = securityService;
         this.pkiCertificateService = pkiCertificateService;
+        this.webSocketService = null;
         this.monitor = monitor;
+    }
+
+    public IndustrialWebSocketService setWebSocketService(IndustrialWebSocketService webSocketService) {
+        this.webSocketService = webSocketService;
+        return webSocketService;
     }
 
     @Override
@@ -144,18 +153,29 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
         // Topic pattern for this asset (allow wildcard subscriptions)
         String topicPattern = assetId + "/#";
 
-        // Start pushing OPC UA data to MQTT topic (topic = assetId)
-        opcUaPushService.startPushing(
-                transferId,
-                assetId,
-                transferProcess.getContentDataAddress()
-        );
+        // Check if WebSocket service is available for client-side execution
+        if (webSocketService != null && webSocketService.getActiveSessionCount() > 0) {
+            monitor.info("WebSocket service available with " + webSocketService.getActiveSessionCount() + " clients - sending OPC-UA read command");
+
+            // Send WebSocket command instead of direct OPC-UA connection
+            String opcUaCommand = buildOpcUaReadCommand(transferId, transferProcess.getContentDataAddress(), assetId, brokerUrl);
+            webSocketService.broadcast(opcUaCommand);
+            monitor.info("Sent OPC-UA read command to all WebSocket clients for transfer: " + transferId);
+        } else {
+            monitor.info("No WebSocket clients available - using direct OPC-UA connection");
+            // Fallback to direct OPC UA data pushing
+            opcUaPushService.startPushing(
+                    transferId,
+                    assetId,
+                    transferProcess.getContentDataAddress()
+            );
+        }
 
         // Generate auth token for EDR access
         String authToken = UUID.randomUUID().toString();
 
         monitor.info("Stored MQTT EDR for transfer " + transferId +
-                    " - Topic: " + assetId + ", Broker: " + brokerUrl);
+                " - Topic: " + assetId + ", Broker: " + brokerUrl);
 
         if (isCertificateBasedAuthentication && pkiCertificateService != null) {
             var csr = transferProcess.getDataDestination().getStringProperty("csr");
@@ -220,5 +240,50 @@ public class OpcUaMqttDataFlowController implements DataFlowController {
         }
 
     }
-}
 
+    /**
+     * Build OPC-UA read command JSON for WebSocket clients
+     */
+    private String buildOpcUaReadCommand(String transferId, DataAddress contentDataAddress, String assetId, String brokerUrl) {
+        String serverUrl = firstNonBlank(
+                contentDataAddress.getStringProperty("serverUrl"),
+                contentDataAddress.getStringProperty(EDC_NAMESPACE + "serverUrl")
+        );
+
+        String nodeIdSpec = firstNonBlank(
+                contentDataAddress.getStringProperty("nodeId"),
+                contentDataAddress.getStringProperty(EDC_NAMESPACE + "nodeId"),
+                contentDataAddress.getStringProperty("nodeIds"),
+                contentDataAddress.getStringProperty(EDC_NAMESPACE + "nodeIds")
+        );
+        String pushInterval = getDataAddressProperty(contentDataAddress, "pushInterval", "5000");
+
+        return String.format(
+                "{\"type\":\"opcua_read_request\",\"transferId\":\"%s\",\"opcuaServer\":\"%s\",\"nodeIds\":[\"%s\"],\"mqttBroker\":\"%s\",\"mqttTopic\":\"%s\",\"pushInterval\":%s,\"timestamp\":\"%s\"}",
+                transferId, serverUrl, nodeIdSpec, brokerUrl, assetId, pushInterval, java.time.Instant.now().toString()
+        );
+    }
+
+    /**
+     * Helper method to get property from DataAddress with fallback
+     */
+    private String getDataAddressProperty(DataAddress dataAddress, String key, String defaultValue) {
+        String value = dataAddress.getStringProperty(key);
+        if (value == null) {
+            value = dataAddress.getStringProperty(EDC_NAMESPACE + key);
+        }
+        return value != null ? value : defaultValue;
+    }
+
+    private static String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (var v : values) {
+            if (v != null && !v.trim().isEmpty()) {
+                return v;
+            }
+        }
+        return null;
+    }
+}

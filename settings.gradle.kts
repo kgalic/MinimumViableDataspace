@@ -41,3 +41,5 @@ include(":launchers:dataplane")
 include(":launchers:runtime-embedded")
 include(":launchers:catalog-server")
 include(":launchers:issuerservice")
+
+include("extensions:industrial-connector-wss")

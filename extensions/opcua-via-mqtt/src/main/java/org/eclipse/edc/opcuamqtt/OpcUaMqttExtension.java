@@ -1,6 +1,7 @@
 package org.eclipse.edc.opcuamqtt;
 
 import org.eclipse.edc.connector.controlplane.transfer.spi.flow.DataFlowManager;
+import org.eclipse.edc.industrial.wss.IndustrialWebSocketService;
 import org.eclipse.edc.opcuamqtt.dataflow.OpcUaMqttDataFlowController;
 import org.eclipse.edc.opcuamqtt.mqttclient.MqttClient;
 import org.eclipse.edc.opcuamqtt.mqttclient.PahoMqttClientImpl;
@@ -20,6 +21,10 @@ import org.eclipse.edc.spi.system.ServiceExtensionContext;
 import org.eclipse.edc.web.spi.WebService;
 
 public class OpcUaMqttExtension implements ServiceExtension {
+
+    // Add configuration settings for conditional loading
+    private static final String EXTENSION_ENABLED = "edc.opcua.mqtt.extension.enabled";
+    private static final String WEBSOCKET_INTEGRATION_ENABLED = "edc.opcua.mqtt.websocket.enabled";
 
     private static final String MQTT_BROKER_URL_ENV = "edc.opcua.mqtt.broker.url";
     private static final String MQTT_USERNAME_ENV = "edc.opcua.mqtt.username";
@@ -41,6 +46,13 @@ public class OpcUaMqttExtension implements ServiceExtension {
     @Inject(required = false)
     private WebService webService;
 
+    // Store context and services for use in start() method
+    private ServiceExtensionContext extensionContext;
+    private OpcUaMqttPushService pushService;
+    private PkiCertificateService pkiCertificateService;
+    private SecurityService securityService;
+    private MqttBrokerConfig brokerConfig;
+
     @Override
     public String name() {
         return "OPC UA MQTT Extension";
@@ -49,6 +61,15 @@ public class OpcUaMqttExtension implements ServiceExtension {
     @Override
     public void initialize(ServiceExtensionContext context) {
         var monitor = context.getMonitor();
+
+        // Check if extension should be enabled
+        boolean extensionEnabled = context.getSetting(EXTENSION_ENABLED, false);
+        if (!extensionEnabled) {
+            monitor.info("OPC UA MQTT Extension is disabled via configuration");
+            return;
+        }
+
+        this.extensionContext = context; // Store context for later use
         monitor.info("Initializing OPC UA MQTT Extension");
 
         // Create internal OPC UA client - no dependencies on other extensions
@@ -62,7 +83,6 @@ public class OpcUaMqttExtension implements ServiceExtension {
 
         MqttClient pushMqttClient = null;
         MqttClient adminMqttClient = null;
-        MqttBrokerConfig brokerConfig = null;
         PkiConfig pkiConfig = null;
 
         boolean certBasedAuthEnabled = context.getSetting(MQTT_CERTIFICATE_AUTHENTICATION_ENABLED, false);
@@ -117,7 +137,7 @@ public class OpcUaMqttExtension implements ServiceExtension {
         }
 
         // Create and register the push service
-        OpcUaMqttPushService pushService = new OpcUaMqttPushServiceImpl(opcUaClient, pushMqttClient, brokerConfig, monitor);
+        pushService = new OpcUaMqttPushServiceImpl(opcUaClient, pushMqttClient, brokerConfig, monitor);
         context.registerService(OpcUaMqttPushService.class, pushService);
         monitor.info("Registered OpcUaMqttPushService with provider-managed MQTT broker");
 
@@ -132,21 +152,50 @@ public class OpcUaMqttExtension implements ServiceExtension {
             monitor.warning("Mosquitto Dynamic Security service not initialized - broker URL not configured");
         }
 
-        // Only register dataflow controller if we're in control plane (DataFlowManager available)
+        // Only register basic services, DataFlowController will be created in start() with WebSocket service
         if (dataFlowManager != null && webService != null) {
             // Get the security service (may be null if broker not configured)
-            var securityService = context.getService(SecurityService.class, true);
+            this.securityService = context.getService(SecurityService.class, true);
+            this.pkiCertificateService = new PkiCertificateServiceImpl(pkiConfig, monitor);
+            context.registerService(PkiCertificateService.class, this.pkiCertificateService);
 
-            PkiCertificateService pkiCertificateService = new PkiCertificateServiceImpl(pkiConfig, monitor);
-            context.registerService(PkiCertificateService.class, pkiCertificateService);
-            // Create and register the data flow controller
-            // The DataFlowController handles MQTT-PUSH transfers and stores EDR data
+            monitor.info("Services registered - DataFlowController will be created in start() phase with WebSocket integration");
+        } else {
+            monitor.debug("DataFlowManager or WebService not available - running in dataplane-only mode");
+        }
+
+        if (dataFlowManager != null && webService != null && pushService != null) {
             OpcUaMqttDataFlowController flowController = new OpcUaMqttDataFlowController(
                     pushService, pkiCertificateService, brokerConfig, securityService, monitor);
             dataFlowManager.register(flowController);
-            monitor.info("Registered OpcUaMqttDataFlowController with DataFlowManager for MQTT-PUSH transfers");
+            context.registerService(OpcUaMqttDataFlowController.class, flowController);
+        }
+    }
+
+    @Override
+    public void start() {
+        // Check if extension was properly initialized (not disabled via configuration)
+        if (extensionContext == null) {
+            // Extension was disabled in initialize() - do nothing
+            return;
+        }
+
+        var monitor = extensionContext.getMonitor();
+        monitor.info("Starting OPC UA MQTT Extension - checking for WebSocket service availability");
+
+        // Now that all extensions have completed initialization, check for WebSocket service
+        var webSocketService = extensionContext.getService(IndustrialWebSocketService.class, true);
+        if (webSocketService != null) {
+            monitor.info("Industrial WebSocket Service is available for client communication");
+            monitor.info("Active WebSocket clients: " + webSocketService.getActiveSessionCount());
         } else {
-            monitor.debug("DataFlowManager or WebService not available - running in dataplane-only mode");
+            monitor.debug("Industrial WebSocket Service not available - will use direct OPC-UA connections");
+        }
+
+        var mqttDataFlowController = extensionContext.getService(OpcUaMqttDataFlowController.class, true);
+        if (mqttDataFlowController != null) {
+            monitor.info("OPC UA MQTT DataFlowController is available");
+            mqttDataFlowController.setWebSocketService(webSocketService);
         }
     }
 }
