@@ -43,3 +43,4 @@ include(":launchers:catalog-server")
 include(":launchers:issuerservice")
 
 include("extensions:industrial-connector-wss")
+include("extensions:industrial-connector-resolver")
