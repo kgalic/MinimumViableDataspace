@@ -62,8 +62,6 @@ public class IndustrialConnectorResolverExtension implements ServiceExtension {
         var configServiceImplementation = new IndustrialConnectorResolverConfigServiceImpl(context.getConfig());
         context.registerService(IndustrialConnectorResolverConfigService.class, configServiceImplementation);
 
-
-
         var config = configServiceImplementation.getConfig();
 
         if (dataFlowManager != null) {

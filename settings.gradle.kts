@@ -44,3 +44,4 @@ include(":launchers:issuerservice")
 
 include("extensions:industrial-connector-wss")
 include("extensions:industrial-connector-resolver")
+include("extensions:common-spi")

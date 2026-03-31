@@ -1,7 +1,7 @@
 package org.eclipse.edc.industrial.connector.resolver.security.mosquitto;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eclipse.edc.industrial.connector.resolver.mqttclient.MqttClient;
+import org.eclipse.edc.common.spi.mqttclient.MqttClient;
 import org.eclipse.edc.industrial.connector.resolver.security.SecurityService;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.result.Result;
@@ -27,14 +27,12 @@ public class MqttSecurityServiceImpl implements SecurityService<MosquittoCredent
     private static final int RESPONSE_TIMEOUT_SECONDS = 10;
 
     private final MqttClient mqttClient;
-    private final String brokerUrl;
     private final Monitor monitor;
     private final ObjectMapper objectMapper;
 
-    public MqttSecurityServiceImpl(String brokerUrl, MqttClient mqttClient, Monitor monitor) {
+    public MqttSecurityServiceImpl(MqttClient mqttClient, Monitor monitor) {
         this.mqttClient = mqttClient;
         this.monitor = monitor;
-        this.brokerUrl = brokerUrl;
         this.objectMapper = new ObjectMapper();
     }
 

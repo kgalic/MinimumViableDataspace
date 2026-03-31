@@ -1,7 +1,7 @@
 package org.eclipse.edc.industrial.connector.resolver.config.mosquitto;
 
-import org.eclipse.edc.industrial.connector.resolver.config.IndustrialConnectorResolverConfigService;
 import org.eclipse.edc.industrial.connector.resolver.config.IndustrialConnectorResolverConfig;
+import org.eclipse.edc.industrial.connector.resolver.config.IndustrialConnectorResolverConfigService;
 import org.eclipse.edc.spi.system.configuration.Config;
 
 public class IndustrialConnectorResolverConfigServiceImpl implements IndustrialConnectorResolverConfigService<IndustrialConnectorResolverConfig> {

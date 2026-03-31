@@ -1,4 +1,4 @@
-package org.eclipse.edc.industrial.connector.resolver.mqttclient;
+package org.eclipse.edc.common.spi.mqttclient;
 
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;

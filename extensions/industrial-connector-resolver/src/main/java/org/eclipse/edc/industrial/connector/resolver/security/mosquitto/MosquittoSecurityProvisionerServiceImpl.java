@@ -1,8 +1,8 @@
 package org.eclipse.edc.industrial.connector.resolver.security.mosquitto;
 
+import org.eclipse.edc.common.spi.mqttclient.MqttClient;
+import org.eclipse.edc.common.spi.mqttclient.PahoMqttClientImpl;
 import org.eclipse.edc.industrial.connector.resolver.config.IndustrialConnectorResolverConfig;
-import org.eclipse.edc.industrial.connector.resolver.mqttclient.MqttClient;
-import org.eclipse.edc.industrial.connector.resolver.mqttclient.PahoMqttClientImpl;
 import org.eclipse.edc.industrial.connector.resolver.security.SecurityService;
 import org.eclipse.edc.industrial.connector.resolver.security.SecurityServiceProvisionerService;
 import org.eclipse.edc.spi.monitor.Monitor;
@@ -27,7 +27,7 @@ public class MosquittoSecurityProvisionerServiceImpl implements SecurityServiceP
      */
     public MosquittoSecurityProvisionerServiceImpl(Monitor monitor, IndustrialConnectorResolverConfig config) {
         MqttClient mqttClient = createMqttClient(monitor, config);
-        this.securityService = new MqttSecurityServiceImpl(config.getSinkServiceUrl(), mqttClient, monitor);
+        this.securityService = new MqttSecurityServiceImpl(mqttClient, monitor);
     }
 
     /**

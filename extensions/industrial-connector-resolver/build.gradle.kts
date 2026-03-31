@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":extensions:common-spi"))
     implementation(libs.edc.boot)
     implementation(libs.edc.core.runtime)
 

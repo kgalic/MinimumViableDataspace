@@ -1,5 +1,5 @@
 {
-	"changeIndex":	4,
+	"changeIndex":	9,
 	"defaultACLAccess":	{
 		"publishClientSend":	false,
 		"publishClientReceive":	true,
@@ -24,6 +24,12 @@
 					"rolename":	"client"
 				}],
 			"encoded_password":	"$7$1000$hgUAnei23HCDAxz1jAKPOzRcH/1DaEn9+3mEuI2AXKKFRHcHRQit3sguqKf++DsuussNDr1pBKiwFU+qmNZ3qQ==$WVKF1/WIAFewIlpJkAYVU4VLV9j5u8JkcNzHM/9K3YlgV53xNKOf0EgctNAdAepeFGIUOst6QAQL5gXk/8S0eg=="
+		}, {
+			"username":	"edc-user-8021fb24-591b-46c8-b84a-2fbcd26a01fe",
+			"roles":	[{
+					"rolename":	"edc-role-8021fb24-591b-46c8-b84a-2fbcd26a01fe"
+				}],
+			"encoded_password":	"$7$1000$Kd20GcgLcLL0xPbcoXvrVRK3FGHKs1b9uXddYQqd/BF94mhSgrQYFkGFdpbHZcDiXH97r/JktDsINIpU15GXQA==$hSuvwi0gwVNWRUjY9kDqMCYtdzaw7rCyBEq0D4SAClCqiIR/rKgRhXNui7sjloZ6z6zs9rU4XdBkvuD1O3HtaQ=="
 		}, {
 			"username":	"push-user",
 			"roles":	[{
@@ -111,6 +117,20 @@
 				}, {
 					"acltype":	"unsubscribePattern",
 					"topic":	"$CONTROL/dynamic-security/#",
+					"priority":	0,
+					"allow":	true
+				}]
+		}, {
+			"rolename":	"edc-role-8021fb24-591b-46c8-b84a-2fbcd26a01fe",
+			"allowwildcardsubs":	true,
+			"acls":	[{
+					"acltype":	"publishClientReceive",
+					"topic":	"opcuamqtt-machine-tool-qna/#",
+					"priority":	0,
+					"allow":	true
+				}, {
+					"acltype":	"subscribePattern",
+					"topic":	"opcuamqtt-machine-tool-qna/#",
 					"priority":	0,
 					"allow":	true
 				}]
