@@ -2,11 +2,16 @@ package org.eclipse.edc.opcuamqtt;
 
 import org.eclipse.edc.common.spi.config.mosquitto.IndustrialConnectorResolverConfigServiceImpl;
 import org.eclipse.edc.opcuamqtt.dataflow.TransferFlowService;
-import org.eclipse.edc.opcuamqtt.dataflow.mosquitto.OpcUaMosquittoMqttTransferFlowProvisionerServiceImpl;
+import org.eclipse.edc.opcuamqtt.dataflow.impl.OpcUaMosquittoMqttTransferFlowProvisionerServiceImpl;
+import org.eclipse.edc.runtime.metamodel.annotation.Extension;
 import org.eclipse.edc.spi.system.ServiceExtension;
 import org.eclipse.edc.spi.system.ServiceExtensionContext;
 
+import static org.eclipse.edc.opcuamqtt.OpcUaMqttExtension.NAME;
+
+@Extension(value = NAME)
 public class OpcUaMqttExtension implements ServiceExtension {
+    public static final String NAME = "Local Extension with OPC UA via MQTT";
 
     // Add configuration settings for conditional loading
     private static final String EXTENSION_ENABLED = "edc.industrial.connector.wss.enabled";

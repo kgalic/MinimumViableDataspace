@@ -9,6 +9,7 @@ import org.eclipse.edc.connector.controlplane.transfer.spi.flow.DataFlowControll
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.DataFlowResponse;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.TransferProcess;
 import org.eclipse.edc.industrial.connector.resolver.datatypes.IndustrialConnectorDataTypes;
+import org.eclipse.edc.opcuamqtt.dataflow.TransferFlowService;
 import org.eclipse.edc.spi.response.ResponseStatus;
 import org.eclipse.edc.spi.response.StatusResult;
 import org.eclipse.edc.spi.result.Result;
@@ -24,6 +25,7 @@ public class IndustrialConnectorDataFlow implements DataFlowController {
     private final IndustrialConnectorResolverConfigService configService;
     private final IndustrialConnectorDataTypes industrialConnectorDataTypes;
     private final SecurityService securityService;
+    private TransferFlowService transferFlowService;
 
     public IndustrialConnectorDataFlow(PkiCertificateService pkiCertificateService,
                                        IndustrialConnectorDataTypes industrialConnectorDataTypes,
@@ -33,6 +35,10 @@ public class IndustrialConnectorDataFlow implements DataFlowController {
         this.configService = configService;
         this.industrialConnectorDataTypes = industrialConnectorDataTypes;
         this.securityService = securityService;
+    }
+
+    public void setDataFlow(TransferFlowService transferFlowService) {
+        this.transferFlowService = transferFlowService;
     }
 
     @Override

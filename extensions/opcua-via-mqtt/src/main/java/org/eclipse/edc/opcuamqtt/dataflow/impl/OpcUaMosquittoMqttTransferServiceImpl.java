@@ -1,4 +1,4 @@
-package org.eclipse.edc.opcuamqtt.dataflow.mosquitto;
+package org.eclipse.edc.opcuamqtt.dataflow.impl;
 import org.eclipse.edc.common.spi.pki.PkiCertificateService;
 import org.eclipse.edc.common.spi.security.SecurityService;
 import org.eclipse.edc.common.spi.security.mosquitto.MosquittoCredentials;
@@ -8,8 +8,8 @@ import org.eclipse.edc.connector.controlplane.transfer.spi.types.DataFlowRespons
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.TransferProcess;
 import org.eclipse.edc.industrial.wss.IndustrialWebSocketService;
 import org.eclipse.edc.opcuamqtt.dataflow.TransferFlowService;
-import org.eclipse.edc.opcuamqtt.mqttpush.MqttBrokerConfig;
-import org.eclipse.edc.opcuamqtt.mqttpush.OpcUaMqttPushService;
+import org.eclipse.edc.opcuamqtt.dataflow.impl.mqttpush.MqttBrokerConfig;
+import org.eclipse.edc.opcuamqtt.dataflow.impl.mqttpush.OpcUaMqttPushService;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.response.ResponseStatus;
 import org.eclipse.edc.spi.response.StatusResult;
@@ -50,17 +50,6 @@ public class OpcUaMosquittoMqttTransferServiceImpl implements TransferFlowServic
         this.webSocketService = null;
     }
 
-
-    /**
-     * Sets the WebSocket service for client-side OPC-UA command execution.
-     *
-     * @param webSocketService the WebSocket service instance
-     * @return the WebSocket service instance
-     */
-    public IndustrialWebSocketService setWebSocketService(IndustrialWebSocketService webSocketService) {
-        this.webSocketService = webSocketService;
-        return webSocketService;
-    }
 
     @Override
     public boolean canHandle(@NotNull TransferProcess transferProcess) {

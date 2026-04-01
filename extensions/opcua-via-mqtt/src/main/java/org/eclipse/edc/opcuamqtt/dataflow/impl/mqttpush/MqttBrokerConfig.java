@@ -1,5 +1,5 @@
 
-package org.eclipse.edc.opcuamqtt.mqttpush;
+package org.eclipse.edc.opcuamqtt.dataflow.impl.mqttpush;
 
 /**
  * Configuration for the provider-managed MQTT broker.

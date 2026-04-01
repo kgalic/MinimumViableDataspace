@@ -1,17 +1,3 @@
-/*
- *  Copyright (c) 2024 Metaform Systems, Inc.
- *
- *  This program and the accompanying materials are made available under the
- *  terms of the Apache License, Version 2.0 which is available at
- *  https://www.apache.org/licenses/LICENSE-2.0
- *
- *  SPDX-License-Identifier: Apache-2.0
- *
- *  Contributors:
- *       Metaform Systems, Inc. - initial API and implementation
- *
- */
-
 package org.eclipse.edc.industrial.connector.resolver;
 
 import org.eclipse.edc.common.spi.config.mosquitto.IndustrialConnectorResolverConfigServiceImpl;
@@ -24,6 +10,7 @@ import org.eclipse.edc.connector.controlplane.transfer.spi.flow.DataFlowManager;
 import org.eclipse.edc.industrial.connector.resolver.dataflow.IndustrialConnectorDataFlow;
 import org.eclipse.edc.industrial.connector.resolver.datatypes.IndustrialConnectorDataTypes;
 import org.eclipse.edc.industrial.connector.resolver.datatypes.implementation.IndustrialConnectorDataTypesImpl;
+import org.eclipse.edc.opcuamqtt.dataflow.TransferFlowService;
 import org.eclipse.edc.runtime.metamodel.annotation.Extension;
 import org.eclipse.edc.runtime.metamodel.annotation.Inject;
 import org.eclipse.edc.spi.system.ServiceExtension;
@@ -38,6 +25,9 @@ public class IndustrialConnectorResolverExtension implements ServiceExtension {
     private static final String EXTENSION_ENABLED = "edc.industrial.connector.extension.enabled";
     private static final String WEBSOCKET_INTEGRATION_ENABLED = "edc.opcua.mosquitto.websocket.enabled";
 
+    private ServiceExtensionContext context;
+    private IndustrialConnectorDataFlow industrialDataFlow;
+
     @Override
     public String name() {
         return NAME;
@@ -50,10 +40,10 @@ public class IndustrialConnectorResolverExtension implements ServiceExtension {
     public void initialize(ServiceExtensionContext context) {
         var monitor = context.getMonitor().withPrefix("INDUSTRIAL");
         monitor.info("Industrial Connector Resolver Extension initialized");
-
+        this.context = context;
         boolean extensionEnabled = context.getSetting(EXTENSION_ENABLED, false);
         if (!extensionEnabled) {
-            monitor.info("OPC UA MQTT Extension is disabled via configuration");
+            monitor.info("Resolver Extension is disabled via configuration");
             return;
         }
 
@@ -84,10 +74,21 @@ public class IndustrialConnectorResolverExtension implements ServiceExtension {
             var pkiService = new PkiCertificateServiceImpl(pkiConfig, monitor);
             context.registerService(PkiCertificateService.class, pkiService);
 
-            var industrialDataFlow = new IndustrialConnectorDataFlow(pkiService, dataTypesService, configServiceImplementation, securityService);
-            dataFlowManager.register(industrialDataFlow);
+            this.industrialDataFlow = new IndustrialConnectorDataFlow(pkiService, dataTypesService, configServiceImplementation, securityService);
+            dataFlowManager.register(this.industrialDataFlow);
         } else {
             monitor.info("Industrial WebSocket Extension is disabled");
         }
+    }
+
+    @Override
+    public void start() {
+        var transferFlowServiceInstance = this.context.getService(TransferFlowService.class);
+        if (transferFlowServiceInstance == null) {
+            context.getMonitor().warning("TransferFlowService is not available. Industrial Connector Resolver Extension will not start.");
+            return;
+        }
+        this.industrialDataFlow.setDataFlow(transferFlowServiceInstance);
+        context.getMonitor().info("Industrial Connector Resolver Extension started successfully");
     }
 }

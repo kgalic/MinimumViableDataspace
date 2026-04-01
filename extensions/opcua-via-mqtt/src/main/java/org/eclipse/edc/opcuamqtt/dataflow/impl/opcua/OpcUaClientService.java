@@ -1,4 +1,4 @@
-package org.eclipse.edc.opcuamqtt.opcua;
+package org.eclipse.edc.opcuamqtt.dataflow.impl.opcua;
 
 /**
  * Client interface for reading values from OPC UA servers.
