@@ -15,15 +15,15 @@
 package org.eclipse.edc.industrial.connector.resolver;
 
 import org.eclipse.edc.common.spi.config.mosquitto.IndustrialConnectorResolverConfigServiceImpl;
+import org.eclipse.edc.common.spi.pki.PkiCertificateService;
+import org.eclipse.edc.common.spi.pki.custom.PkiCertificateServiceImpl;
+import org.eclipse.edc.common.spi.pki.custom.PkiConfig;
+import org.eclipse.edc.common.spi.security.SecurityService;
+import org.eclipse.edc.common.spi.security.mosquitto.MosquittoSecurityProvisionerServiceImpl;
 import org.eclipse.edc.connector.controlplane.transfer.spi.flow.DataFlowManager;
 import org.eclipse.edc.industrial.connector.resolver.dataflow.IndustrialConnectorDataFlow;
 import org.eclipse.edc.industrial.connector.resolver.datatypes.IndustrialConnectorDataTypes;
 import org.eclipse.edc.industrial.connector.resolver.datatypes.implementation.IndustrialConnectorDataTypesImpl;
-import org.eclipse.edc.industrial.connector.resolver.pki.PkiCertificateService;
-import org.eclipse.edc.industrial.connector.resolver.pki.custom.PkiCertificateServiceImpl;
-import org.eclipse.edc.industrial.connector.resolver.pki.custom.PkiConfig;
-import org.eclipse.edc.industrial.connector.resolver.security.SecurityService;
-import org.eclipse.edc.industrial.connector.resolver.security.mosquitto.MosquittoSecurityProvisionerServiceImpl;
 import org.eclipse.edc.runtime.metamodel.annotation.Extension;
 import org.eclipse.edc.runtime.metamodel.annotation.Inject;
 import org.eclipse.edc.spi.system.ServiceExtension;

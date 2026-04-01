@@ -1,4 +1,4 @@
-package org.eclipse.edc.industrial.connector.resolver.security.mosquitto;
+package org.eclipse.edc.common.spi.security.mosquitto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

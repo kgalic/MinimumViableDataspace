@@ -1,11 +1,11 @@
 
-package org.eclipse.edc.industrial.connector.resolver.pki.custom;
+package org.eclipse.edc.common.spi.pki.custom;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
-import org.eclipse.edc.industrial.connector.resolver.pki.PkiCertificateService;
+import org.eclipse.edc.common.spi.pki.PkiCertificateService;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.result.Result;
 

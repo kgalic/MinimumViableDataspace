@@ -1,4 +1,4 @@
-package org.eclipse.edc.industrial.connector.resolver.security;
+package org.eclipse.edc.common.spi.security;
 
 /**
  * Generic request describing a security provisioning operation.

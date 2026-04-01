@@ -1,4 +1,4 @@
-package org.eclipse.edc.opcuamqtt.pki;
+package org.eclipse.edc.common.spi.pki;
 
 import org.eclipse.edc.spi.result.Result;
 

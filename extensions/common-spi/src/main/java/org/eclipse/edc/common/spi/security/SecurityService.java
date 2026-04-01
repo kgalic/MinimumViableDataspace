@@ -1,4 +1,5 @@
-package org.eclipse.edc.opcuamqtt.security;
+package org.eclipse.edc.common.spi.security;
+
 
 import org.eclipse.edc.spi.result.Result;
 

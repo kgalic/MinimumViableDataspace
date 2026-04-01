@@ -1,6 +1,6 @@
-package org.eclipse.edc.industrial.connector.resolver.security.mosquitto;
+package org.eclipse.edc.common.spi.security.mosquitto;
 
-import org.eclipse.edc.industrial.connector.resolver.security.SecurityRequest;
+import org.eclipse.edc.common.spi.security.SecurityRequest;
 
 /**
  * Security provisioning request for Mosquitto Dynamic Security plugin.

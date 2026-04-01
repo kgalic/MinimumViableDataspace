@@ -1,4 +1,4 @@
-package org.eclipse.edc.industrial.connector.resolver.pki.custom;
+package org.eclipse.edc.common.spi.pki.custom;
 
 /**
  * Configuration for PKI certificate service.

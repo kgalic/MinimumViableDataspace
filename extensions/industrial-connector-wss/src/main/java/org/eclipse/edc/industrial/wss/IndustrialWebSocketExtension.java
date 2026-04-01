@@ -21,7 +21,7 @@ public class IndustrialWebSocketExtension implements ServiceExtension {
     private static final String NAME = "Industrial WebSocket Connector (WSS)";
 
     // Configuration keys
-    private static final String EXTENSION_ENABLED = "edc.industrial.wss.extension.enabled";
+    private static final String EXTENSION_ENABLED = "edc.industrial.connector.wss.enabled";
     private static final String WS_PORT_SETTING = "edc.industrial.wss.port";
     private static final String WS_PATH_SETTING = "edc.industrial.wss.path";
     private static final String WS_IDLE_TIMEOUT_SETTING = "edc.industrial.wss.idle.timeout";

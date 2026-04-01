@@ -4,6 +4,10 @@ import org.eclipse.edc.common.spi.config.IndustrialConnectorResolverConfigImpl;
 import org.eclipse.edc.common.spi.config.IndustrialConnectorResolverConfigService;
 import org.eclipse.edc.common.spi.mqttclient.MqttClient;
 import org.eclipse.edc.common.spi.mqttclient.PahoMqttClientImpl;
+import org.eclipse.edc.common.spi.security.SecurityService;
+import org.eclipse.edc.common.spi.security.mosquitto.MosquittoCredentials;
+import org.eclipse.edc.common.spi.security.mosquitto.MosquittoSecurityRequest;
+import org.eclipse.edc.common.spi.security.mosquitto.MqttSecurityServiceImpl;
 import org.eclipse.edc.opcuamqtt.dataflow.TransferFlowProvisionerService;
 import org.eclipse.edc.opcuamqtt.dataflow.TransferFlowService;
 import org.eclipse.edc.opcuamqtt.mqttpush.MqttBrokerConfig;
@@ -11,10 +15,6 @@ import org.eclipse.edc.opcuamqtt.mqttpush.OpcUaMqttPushService;
 import org.eclipse.edc.opcuamqtt.mqttpush.OpcUaMqttPushServiceImpl;
 import org.eclipse.edc.opcuamqtt.opcua.OpcUaClientService;
 import org.eclipse.edc.opcuamqtt.opcua.OpcUaClientServiceImpl;
-import org.eclipse.edc.opcuamqtt.security.SecurityService;
-import org.eclipse.edc.opcuamqtt.security.mqtt.MosquittoCredentials;
-import org.eclipse.edc.opcuamqtt.security.mqtt.MosquittoSecurityRequest;
-import org.eclipse.edc.opcuamqtt.security.mqtt.MqttSecurityServiceImpl;
 import org.eclipse.edc.spi.monitor.Monitor;
 
 /**
@@ -58,7 +58,7 @@ public class OpcUaMosquittoMqttTransferFlowProvisionerServiceImpl implements Tra
         
         // Create security service for MQTT access control
         String brokerUrl = config.getSinkServiceUrl();
-        SecurityService<MosquittoCredentials, MosquittoSecurityRequest> securityService = new MqttSecurityServiceImpl(brokerUrl, pushMqttClient, monitor);
+        SecurityService<MosquittoCredentials, MosquittoSecurityRequest> securityService = new MqttSecurityServiceImpl(pushMqttClient, monitor);
         
         // Create and store the transfer flow service
         this.transferFlowService = new OpcUaMosquittoMqttTransferServiceImpl(

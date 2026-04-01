@@ -1,8 +1,8 @@
-package org.eclipse.edc.industrial.connector.resolver.security.mosquitto;
+package org.eclipse.edc.common.spi.security.mosquitto;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.edc.common.spi.mqttclient.MqttClient;
-import org.eclipse.edc.industrial.connector.resolver.security.SecurityService;
+import org.eclipse.edc.common.spi.security.SecurityService;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.result.Result;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;

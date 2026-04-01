@@ -1,6 +1,6 @@
-package org.eclipse.edc.opcuamqtt.security.mqtt;
+package org.eclipse.edc.common.spi.security.mosquitto;
 
-import org.eclipse.edc.opcuamqtt.security.Credentials;
+import org.eclipse.edc.common.spi.security.Credentials;
 
 /**
  * Represents credentials created for a Mosquitto user.

@@ -9,7 +9,7 @@ import org.eclipse.edc.spi.system.ServiceExtensionContext;
 public class OpcUaMqttExtension implements ServiceExtension {
 
     // Add configuration settings for conditional loading
-    private static final String EXTENSION_ENABLED = "edc.opcua.mqtt.extension.enabled";
+    private static final String EXTENSION_ENABLED = "edc.industrial.connector.wss.enabled";
 
     @Override
     public String name() {
@@ -21,14 +21,13 @@ public class OpcUaMqttExtension implements ServiceExtension {
         var monitor = context.getMonitor();
 
         // Check if extension should be enabled
-        boolean extensionEnabled = context.getSetting(EXTENSION_ENABLED, false);
-        if (!extensionEnabled) {
-            monitor.info("OPC UA MQTT Extension is disabled via configuration");
+        boolean wssExtensionEnabled = context.getSetting(EXTENSION_ENABLED, false);
+        if (wssExtensionEnabled) {
+            monitor.info("Local Extension is disabled via configuration");
             return;
         }
 
         var configServiceImplementation = new IndustrialConnectorResolverConfigServiceImpl(context.getConfig());
-        var config = configServiceImplementation.getConfig();
 
         var transferFlowServiceProvisioner = new OpcUaMosquittoMqttTransferFlowProvisionerServiceImpl(monitor, configServiceImplementation);
         var transferFlowService = transferFlowServiceProvisioner.getTransferFlowService();

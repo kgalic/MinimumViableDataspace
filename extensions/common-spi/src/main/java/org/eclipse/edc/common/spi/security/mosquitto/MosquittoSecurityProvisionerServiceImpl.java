@@ -1,11 +1,11 @@
-package org.eclipse.edc.industrial.connector.resolver.security.mosquitto;
+package org.eclipse.edc.common.spi.security.mosquitto;
 
 import org.eclipse.edc.common.spi.config.IndustrialConnectorResolverConfigImpl;
 import org.eclipse.edc.common.spi.config.IndustrialConnectorResolverConfigService;
 import org.eclipse.edc.common.spi.mqttclient.MqttClient;
 import org.eclipse.edc.common.spi.mqttclient.PahoMqttClientImpl;
-import org.eclipse.edc.industrial.connector.resolver.security.SecurityService;
-import org.eclipse.edc.industrial.connector.resolver.security.SecurityServiceProvisionerService;
+import org.eclipse.edc.common.spi.security.SecurityService;
+import org.eclipse.edc.common.spi.security.SecurityServiceProvisionerService;
 import org.eclipse.edc.spi.monitor.Monitor;
 
 /**

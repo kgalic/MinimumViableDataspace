@@ -1,14 +1,14 @@
 package org.eclipse.edc.industrial.connector.resolver.dataflow;
 
 import org.eclipse.edc.common.spi.config.IndustrialConnectorResolverConfigService;
+import org.eclipse.edc.common.spi.pki.PkiCertificateService;
+import org.eclipse.edc.common.spi.security.SecurityService;
+import org.eclipse.edc.common.spi.security.mosquitto.MosquittoCredentials;
+import org.eclipse.edc.common.spi.security.mosquitto.MosquittoSecurityRequest;
 import org.eclipse.edc.connector.controlplane.transfer.spi.flow.DataFlowController;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.DataFlowResponse;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.TransferProcess;
 import org.eclipse.edc.industrial.connector.resolver.datatypes.IndustrialConnectorDataTypes;
-import org.eclipse.edc.industrial.connector.resolver.pki.PkiCertificateService;
-import org.eclipse.edc.industrial.connector.resolver.security.SecurityService;
-import org.eclipse.edc.industrial.connector.resolver.security.mosquitto.MosquittoCredentials;
-import org.eclipse.edc.industrial.connector.resolver.security.mosquitto.MosquittoSecurityRequest;
 import org.eclipse.edc.spi.response.ResponseStatus;
 import org.eclipse.edc.spi.response.StatusResult;
 import org.eclipse.edc.spi.result.Result;
