@@ -1,7 +1,7 @@
 
-package org.eclipse.edc.industrial.connector.resolver.config;
+package org.eclipse.edc.common.spi.config;
 
-public class IndustrialConnectorResolverConfig {
+public class IndustrialConnectorResolverConfigImpl {
 
     private Boolean certBasedAuthenticationEnabled;
     private String sinkServiceUrl;

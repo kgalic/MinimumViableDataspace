@@ -14,9 +14,8 @@
 
 package org.eclipse.edc.industrial.connector.resolver;
 
+import org.eclipse.edc.common.spi.config.mosquitto.IndustrialConnectorResolverConfigServiceImpl;
 import org.eclipse.edc.connector.controlplane.transfer.spi.flow.DataFlowManager;
-import org.eclipse.edc.industrial.connector.resolver.config.IndustrialConnectorResolverConfigService;
-import org.eclipse.edc.industrial.connector.resolver.config.mosquitto.IndustrialConnectorResolverConfigServiceImpl;
 import org.eclipse.edc.industrial.connector.resolver.dataflow.IndustrialConnectorDataFlow;
 import org.eclipse.edc.industrial.connector.resolver.datatypes.IndustrialConnectorDataTypes;
 import org.eclipse.edc.industrial.connector.resolver.datatypes.implementation.IndustrialConnectorDataTypesImpl;
@@ -58,10 +57,8 @@ public class IndustrialConnectorResolverExtension implements ServiceExtension {
             return;
         }
 
-        // Register the config service
+        // Read the config
         var configServiceImplementation = new IndustrialConnectorResolverConfigServiceImpl(context.getConfig());
-        context.registerService(IndustrialConnectorResolverConfigService.class, configServiceImplementation);
-
         var config = configServiceImplementation.getConfig();
 
         if (dataFlowManager != null) {
@@ -78,7 +75,7 @@ public class IndustrialConnectorResolverExtension implements ServiceExtension {
             context.registerService(IndustrialConnectorDataTypes.class, dataTypesService);
 
             // Register the SecurityService for MQTT access control
-            var securityServiceProvisioner = new MosquittoSecurityProvisionerServiceImpl(monitor, config);
+            var securityServiceProvisioner = new MosquittoSecurityProvisionerServiceImpl(monitor, configServiceImplementation);
             var securityService = securityServiceProvisioner.getSecurityService();
             context.registerService(SecurityService.class, securityService);
 

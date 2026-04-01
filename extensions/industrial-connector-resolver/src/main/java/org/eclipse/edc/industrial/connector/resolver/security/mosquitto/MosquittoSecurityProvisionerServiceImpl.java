@@ -1,8 +1,9 @@
 package org.eclipse.edc.industrial.connector.resolver.security.mosquitto;
 
+import org.eclipse.edc.common.spi.config.IndustrialConnectorResolverConfigImpl;
+import org.eclipse.edc.common.spi.config.IndustrialConnectorResolverConfigService;
 import org.eclipse.edc.common.spi.mqttclient.MqttClient;
 import org.eclipse.edc.common.spi.mqttclient.PahoMqttClientImpl;
-import org.eclipse.edc.industrial.connector.resolver.config.IndustrialConnectorResolverConfig;
 import org.eclipse.edc.industrial.connector.resolver.security.SecurityService;
 import org.eclipse.edc.industrial.connector.resolver.security.SecurityServiceProvisionerService;
 import org.eclipse.edc.spi.monitor.Monitor;
@@ -23,9 +24,11 @@ public class MosquittoSecurityProvisionerServiceImpl implements SecurityServiceP
      * MQTT client based on configuration (certificate-based or credential-based auth).
      *
      * @param monitor for logging
-     * @param config the industrial connector resolver configuration
+     * @param configService the industrial connector resolver config service
      */
-    public MosquittoSecurityProvisionerServiceImpl(Monitor monitor, IndustrialConnectorResolverConfig config) {
+    public MosquittoSecurityProvisionerServiceImpl(Monitor monitor,
+                                                   IndustrialConnectorResolverConfigService<?> configService) {
+        IndustrialConnectorResolverConfigImpl config = configService.getConfig();
         MqttClient mqttClient = createMqttClient(monitor, config);
         this.securityService = new MqttSecurityServiceImpl(mqttClient, monitor);
     }
@@ -39,7 +42,7 @@ public class MosquittoSecurityProvisionerServiceImpl implements SecurityServiceP
      * @param config the configuration containing auth details
      * @return an MQTT client configured with either certificates or credentials
      */
-    private static MqttClient createMqttClient(Monitor monitor, IndustrialConnectorResolverConfig config) {
+    private static MqttClient createMqttClient(Monitor monitor, IndustrialConnectorResolverConfigImpl config) {
         String brokerUrl = config.getSinkServiceUrl();
 
         // Check if certificate-based authentication is enabled

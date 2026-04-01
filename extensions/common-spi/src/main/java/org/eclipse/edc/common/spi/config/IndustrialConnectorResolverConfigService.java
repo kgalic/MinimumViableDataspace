@@ -1,4 +1,4 @@
-package org.eclipse.edc.industrial.connector.resolver.config;
+package org.eclipse.edc.common.spi.config;
 
 import javax.naming.ConfigurationException;
 
@@ -31,12 +31,11 @@ import javax.naming.ConfigurationException;
  * }
  * }</pre>
  *
- * @param <T> the configuration type that extends {@link IndustrialConnectorResolverConfig}
+ * @param <T> the configuration type that extends {@link IndustrialConnectorResolverConfigImpl}
  * @since 1.0.0
- * @see IndustrialConnectorResolverConfig
- * @see org.eclipse.edc.industrial.connector.resolver.IndustrialConnectorResolverExtension
+ * @see IndustrialConnectorResolverConfigImpl
  */
-public interface IndustrialConnectorResolverConfigService<T extends IndustrialConnectorResolverConfig> {
+public interface IndustrialConnectorResolverConfigService<T extends IndustrialConnectorResolverConfigImpl> {
 
     /**
      * Retrieves the complete industrial resolver configuration.
@@ -48,7 +47,7 @@ public interface IndustrialConnectorResolverConfigService<T extends IndustrialCo
      *
      * @return the industrial resolver configuration object containing all settings
      * @throws ConfigurationException if the configuration cannot be loaded or is invalid
-     * @see IndustrialConnectorResolverConfig
+     * @see IndustrialConnectorResolverConfigImpl
      */
-    IndustrialConnectorResolverConfig getConfig();
+    IndustrialConnectorResolverConfigImpl getConfig();
 }

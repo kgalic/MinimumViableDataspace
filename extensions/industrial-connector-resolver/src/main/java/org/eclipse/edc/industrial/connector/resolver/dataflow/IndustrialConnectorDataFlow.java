@@ -1,9 +1,9 @@
 package org.eclipse.edc.industrial.connector.resolver.dataflow;
 
+import org.eclipse.edc.common.spi.config.IndustrialConnectorResolverConfigService;
 import org.eclipse.edc.connector.controlplane.transfer.spi.flow.DataFlowController;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.DataFlowResponse;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.TransferProcess;
-import org.eclipse.edc.industrial.connector.resolver.config.IndustrialConnectorResolverConfigService;
 import org.eclipse.edc.industrial.connector.resolver.datatypes.IndustrialConnectorDataTypes;
 import org.eclipse.edc.industrial.connector.resolver.pki.PkiCertificateService;
 import org.eclipse.edc.industrial.connector.resolver.security.SecurityService;

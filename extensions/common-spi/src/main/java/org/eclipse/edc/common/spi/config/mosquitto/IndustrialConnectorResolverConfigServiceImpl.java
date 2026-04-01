@@ -1,10 +1,10 @@
-package org.eclipse.edc.industrial.connector.resolver.config.mosquitto;
+package org.eclipse.edc.common.spi.config.mosquitto;
 
-import org.eclipse.edc.industrial.connector.resolver.config.IndustrialConnectorResolverConfig;
-import org.eclipse.edc.industrial.connector.resolver.config.IndustrialConnectorResolverConfigService;
+import org.eclipse.edc.common.spi.config.IndustrialConnectorResolverConfigImpl;
+import org.eclipse.edc.common.spi.config.IndustrialConnectorResolverConfigService;
 import org.eclipse.edc.spi.system.configuration.Config;
 
-public class IndustrialConnectorResolverConfigServiceImpl implements IndustrialConnectorResolverConfigService<IndustrialConnectorResolverConfig> {
+public class IndustrialConnectorResolverConfigServiceImpl implements IndustrialConnectorResolverConfigService<IndustrialConnectorResolverConfigImpl> {
 
     // Configuration keys - these should be defined as constants in the extension
     private static final String CERTIFICATE_AUTHENTICATION_ENABLED = "edc.industrial.connector.cert.auth.enabled";
@@ -21,7 +21,7 @@ public class IndustrialConnectorResolverConfigServiceImpl implements IndustrialC
     private static final String PKI_ENDPOINT_URL = "edc.industrial.connector.pki.endpoint.url";
     private static final String PKI_ENDPOINT_KEY = "edc.industrial.connector.pki.endpoint.key";
 
-    private final IndustrialConnectorResolverConfig config;
+    private final IndustrialConnectorResolverConfigImpl config;
 
     /**
      * Constructor that takes Config and reads configuration settings.
@@ -44,7 +44,7 @@ public class IndustrialConnectorResolverConfigServiceImpl implements IndustrialC
         var pkiEndpointKey = config.getString(PKI_ENDPOINT_KEY, null);
 
         // Create the config object
-        this.config = new IndustrialConnectorResolverConfig();
+        this.config = new IndustrialConnectorResolverConfigImpl();
         this.config.setCertBasedAuthenticationEnabled(certBasedAuthEnabled);
         this.config.setSinkServiceUrl(mqttBrokerUrl);
         this.config.setSinkServicePushUsername(mqttUsername);
@@ -61,7 +61,7 @@ public class IndustrialConnectorResolverConfigServiceImpl implements IndustrialC
     }
 
     @Override
-    public IndustrialConnectorResolverConfig getConfig() {
+    public IndustrialConnectorResolverConfigImpl getConfig() {
         return this.config;
     }
 }

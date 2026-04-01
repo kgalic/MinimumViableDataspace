@@ -1,7 +1,7 @@
 package org.eclipse.edc.opcuamqtt.security.mqtt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eclipse.edc.opcuamqtt.mqttclient.MqttClient;
+import org.eclipse.edc.common.spi.mqttclient.MqttClient;
 import org.eclipse.edc.opcuamqtt.security.SecurityService;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.result.Result;
@@ -56,7 +56,7 @@ public class MqttSecurityServiceImpl implements SecurityService<MosquittoCredent
             options.setCleanSession(true);
 
             final CompletableFuture<String>[] responseFutureHolder = new CompletableFuture[]{new CompletableFuture<>()};
-            this.mqttClient.setCallback(brokerUrl, new MqttCallback() {
+            this.mqttClient.setCallback(new MqttCallback() {
                 @Override
                 public void connectionLost(Throwable cause) {
                     monitor.warning("Connection lost during security operation", cause);
@@ -79,7 +79,7 @@ public class MqttSecurityServiceImpl implements SecurityService<MosquittoCredent
             });
 
             // Subscribe to topic
-            this.mqttClient.subscribe(brokerUrl, RESPONSE_TOPIC);
+            this.mqttClient.subscribe(RESPONSE_TOPIC);
 
             // Step 1: Create user
             monitor.debug("Step 1: Creating user " + username);
@@ -111,7 +111,7 @@ public class MqttSecurityServiceImpl implements SecurityService<MosquittoCredent
             waitForResponse(responseFutureHolder[0], "Assign role to user");
 
             // Clean up
-            this.mqttClient.disconnect(brokerUrl);
+            this.mqttClient.disconnect();
 
             monitor.info("Successfully created Mosquitto user " + username + " with role " + roleName);
             return Result.success(new MosquittoCredentials(username, password, roleName, request.getTopic()));
@@ -129,7 +129,7 @@ public class MqttSecurityServiceImpl implements SecurityService<MosquittoCredent
         try {
             // Use array holder to make it effectively final for use in lambda
             final CompletableFuture<String>[] responseFutureHolder = new CompletableFuture[]{new CompletableFuture<>()};
-            this.mqttClient.setCallback(brokerUrl, new MqttCallback() {
+            this.mqttClient.setCallback(new MqttCallback() {
                 @Override
                 public void connectionLost(Throwable cause) {
                     responseFutureHolder[0].completeExceptionally(cause);
@@ -147,7 +147,7 @@ public class MqttSecurityServiceImpl implements SecurityService<MosquittoCredent
                 }
             });
 
-            this.mqttClient.subscribe(brokerUrl, RESPONSE_TOPIC);
+            this.mqttClient.subscribe(RESPONSE_TOPIC);
 
             // Delete user
             MosquittoCommand.Command deleteUserCmd = new MosquittoCommand.Command();
@@ -164,7 +164,7 @@ public class MqttSecurityServiceImpl implements SecurityService<MosquittoCredent
             publishCommand(this.mqttClient, deleteRoleCmd);
             waitForResponse(responseFutureHolder[0], "Delete role");
 
-            this.mqttClient.disconnect(brokerUrl);
+            this.mqttClient.disconnect();
 
             monitor.info("Successfully removed Mosquitto user and role");
             return Result.success();
@@ -183,7 +183,7 @@ public class MqttSecurityServiceImpl implements SecurityService<MosquittoCredent
 
         MqttMessage message = new MqttMessage(json.getBytes(StandardCharsets.UTF_8));
         message.setQos(1); // At least once delivery
-        client.publish(brokerUrl, CONTROL_TOPIC, message.getPayload());
+        client.publish(CONTROL_TOPIC, message.getPayload());
     }
 
     private void waitForResponse(CompletableFuture<String> future, String operation) throws Exception {

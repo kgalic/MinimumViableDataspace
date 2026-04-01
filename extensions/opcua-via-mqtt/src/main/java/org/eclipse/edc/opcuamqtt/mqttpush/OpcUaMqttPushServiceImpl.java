@@ -1,6 +1,6 @@
 package org.eclipse.edc.opcuamqtt.mqttpush;
 
-import org.eclipse.edc.opcuamqtt.mqttclient.MqttClient;
+import org.eclipse.edc.common.spi.mqttclient.MqttClient;
 import org.eclipse.edc.opcuamqtt.opcua.OpcUaClientService;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.types.domain.DataAddress;
@@ -118,7 +118,7 @@ public class OpcUaMqttPushServiceImpl implements OpcUaMqttPushService {
         ScheduledFuture<?> task = scheduler.scheduleAtFixedRate(() -> {
             try {
                 String jsonPayload = readAndFormatOpcUaValues(serverUrl, nodeIds, assetId);
-                mqttClient.publish(brokerConfig.getBrokerUrl(), assetId,
+                mqttClient.publish(assetId,
                         jsonPayload.getBytes(StandardCharsets.UTF_8),
                         brokerConfig.getUsername(), brokerConfig.getPassword());
 
