@@ -1,12 +1,18 @@
 package org.eclipse.edc.industrial.wss;
 
+import org.eclipse.edc.common.spi.dataflow.TransferFlowService;
+import org.eclipse.edc.industrial.wss.dataflow.IndustrialConnectorWssTransferFlowImpl;
 import org.eclipse.edc.industrial.wss.server.IndustrialWebSocketService;
 import org.eclipse.edc.industrial.wss.server.WebSocketServer;
 import org.eclipse.edc.industrial.wss.server.WebSocketSessionManager;
+import org.eclipse.edc.runtime.metamodel.annotation.Extension;
 import org.eclipse.edc.runtime.metamodel.annotation.Inject;
+import org.eclipse.edc.runtime.metamodel.annotation.Provides;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.system.ServiceExtension;
 import org.eclipse.edc.spi.system.ServiceExtensionContext;
+
+import static org.eclipse.edc.industrial.wss.IndustrialWebSocketExtension.NAME;
 
 /**
  * Industrial WebSocket Server Extension for EDC.
@@ -19,9 +25,11 @@ import org.eclipse.edc.spi.system.ServiceExtensionContext;
  * - edc.industrial.wss.path: WebSocket endpoint path (default: /industrial-ws)
  * - edc.industrial.wss.idle.timeout: Connection idle timeout in seconds (default: 300)
  */
+@Provides(TransferFlowService.class)
+@Extension(value = NAME)
 public class IndustrialWebSocketExtension implements ServiceExtension {
 
-    private static final String NAME = "Industrial WebSocket Connector (WSS)";
+    public static final String NAME = "Industrial WebSocket Connector (WSS)";
 
     // Configuration keys
     private static final String EXTENSION_ENABLED = "edc.industrial.connector.wss.enabled";
@@ -65,6 +73,9 @@ public class IndustrialWebSocketExtension implements ServiceExtension {
         // Register both the interface and the concrete implementation
         context.registerService(IndustrialWebSocketService.class, sessionManager);
         context.registerService(WebSocketSessionManager.class, sessionManager);
+
+        var transferFlowService = new IndustrialConnectorWssTransferFlowImpl(monitor, sessionManager);
+        context.registerService(TransferFlowService.class, transferFlowService);
 
         monitor.info(String.format("Industrial WebSocket server will start on port %d, path: %s", configuredPort, configuredPath));
     }
