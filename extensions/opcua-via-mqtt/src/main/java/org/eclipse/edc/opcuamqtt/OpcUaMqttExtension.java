@@ -1,14 +1,16 @@
 package org.eclipse.edc.opcuamqtt;
 
 import org.eclipse.edc.common.spi.config.mosquitto.IndustrialConnectorResolverConfigServiceImpl;
-import org.eclipse.edc.opcuamqtt.dataflow.TransferFlowService;
+import org.eclipse.edc.common.spi.dataflow.TransferFlowService;
 import org.eclipse.edc.opcuamqtt.dataflow.impl.OpcUaMosquittoMqttTransferFlowProvisionerServiceImpl;
 import org.eclipse.edc.runtime.metamodel.annotation.Extension;
+import org.eclipse.edc.runtime.metamodel.annotation.Provides;
 import org.eclipse.edc.spi.system.ServiceExtension;
 import org.eclipse.edc.spi.system.ServiceExtensionContext;
 
 import static org.eclipse.edc.opcuamqtt.OpcUaMqttExtension.NAME;
 
+@Provides(TransferFlowService.class)
 @Extension(value = NAME)
 public class OpcUaMqttExtension implements ServiceExtension {
     public static final String NAME = "Local Extension with OPC UA via MQTT";

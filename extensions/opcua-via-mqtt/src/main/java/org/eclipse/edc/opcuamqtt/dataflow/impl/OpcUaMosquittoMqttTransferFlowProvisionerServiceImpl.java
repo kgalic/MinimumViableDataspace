@@ -2,14 +2,14 @@ package org.eclipse.edc.opcuamqtt.dataflow.impl;
 
 import org.eclipse.edc.common.spi.config.IndustrialConnectorResolverConfigImpl;
 import org.eclipse.edc.common.spi.config.IndustrialConnectorResolverConfigService;
+import org.eclipse.edc.common.spi.dataflow.TransferFlowProvisionerService;
+import org.eclipse.edc.common.spi.dataflow.TransferFlowService;
 import org.eclipse.edc.common.spi.mqttclient.MqttClient;
 import org.eclipse.edc.common.spi.mqttclient.PahoMqttClientImpl;
 import org.eclipse.edc.common.spi.security.SecurityService;
 import org.eclipse.edc.common.spi.security.mosquitto.MosquittoCredentials;
 import org.eclipse.edc.common.spi.security.mosquitto.MosquittoSecurityRequest;
 import org.eclipse.edc.common.spi.security.mosquitto.MqttSecurityServiceImpl;
-import org.eclipse.edc.opcuamqtt.dataflow.TransferFlowProvisionerService;
-import org.eclipse.edc.opcuamqtt.dataflow.TransferFlowService;
 import org.eclipse.edc.opcuamqtt.dataflow.impl.mqttpush.MqttBrokerConfig;
 import org.eclipse.edc.opcuamqtt.dataflow.impl.mqttpush.OpcUaMqttPushService;
 import org.eclipse.edc.opcuamqtt.dataflow.impl.mqttpush.OpcUaMqttPushServiceImpl;

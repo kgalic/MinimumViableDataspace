@@ -1,4 +1,4 @@
-package org.eclipse.edc.industrial.wss;
+package org.eclipse.edc.industrial.wss.server;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

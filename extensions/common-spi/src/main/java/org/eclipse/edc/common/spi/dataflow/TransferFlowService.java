@@ -1,4 +1,4 @@
-package org.eclipse.edc.opcuamqtt.dataflow;
+package org.eclipse.edc.common.spi.dataflow;
 
 import org.eclipse.edc.connector.controlplane.asset.spi.domain.Asset;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.DataFlowResponse;

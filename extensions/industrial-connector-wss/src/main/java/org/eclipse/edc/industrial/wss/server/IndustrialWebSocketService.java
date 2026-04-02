@@ -1,4 +1,4 @@
-package org.eclipse.edc.industrial.wss;
+package org.eclipse.edc.industrial.wss.server;
 
 import java.util.Collection;
 

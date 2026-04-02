@@ -1,4 +1,4 @@
-package org.eclipse.edc.industrial.wss;
+package org.eclipse.edc.industrial.wss.server;
 
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.jetty.server.Server;

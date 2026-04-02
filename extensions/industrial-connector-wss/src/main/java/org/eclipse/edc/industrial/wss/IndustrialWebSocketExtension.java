@@ -1,5 +1,8 @@
 package org.eclipse.edc.industrial.wss;
 
+import org.eclipse.edc.industrial.wss.server.IndustrialWebSocketService;
+import org.eclipse.edc.industrial.wss.server.WebSocketServer;
+import org.eclipse.edc.industrial.wss.server.WebSocketSessionManager;
 import org.eclipse.edc.runtime.metamodel.annotation.Inject;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.system.ServiceExtension;
