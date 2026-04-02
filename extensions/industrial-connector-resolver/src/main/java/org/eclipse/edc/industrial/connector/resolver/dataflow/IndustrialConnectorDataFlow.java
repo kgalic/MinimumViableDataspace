@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+import static org.eclipse.edc.common.spi.helpers.Helpers.firstNonBlank;
+
 public class IndustrialConnectorDataFlow implements DataFlowController {
     private static final String EDC_NAMESPACE = "https://w3id.org/edc/v0.0.1/ns/";
 
@@ -43,6 +45,9 @@ public class IndustrialConnectorDataFlow implements DataFlowController {
 
     @Override
     public boolean canHandle(TransferProcess transferProcess) {
+        if (transferFlowService != null && transferFlowService.canHandle(transferProcess)) {
+            return true;
+        }
         var contentDataAddress = transferProcess.getContentDataAddress();
         if (contentDataAddress == null || industrialConnectorDataTypes == null) {
             return false;
@@ -64,7 +69,7 @@ public class IndustrialConnectorDataFlow implements DataFlowController {
 
     @Override
     public Set<String> transferTypesFor(org.eclipse.edc.connector.controlplane.asset.spi.domain.Asset asset) {
-        return Set.of();
+        return industrialConnectorDataTypes.getSupportedDataTypes();
     }
 
     @Override
@@ -100,6 +105,20 @@ public class IndustrialConnectorDataFlow implements DataFlowController {
         // Topic pattern for this asset (allow wildcard subscriptions)
         String topicPattern = assetId + "/#";
 
+        var existingDataAddress = transferProcess.getContentDataAddress();
+        //copyng existing data address and adding certificate and ca-chain
+        String serverUrl = firstNonBlank(
+                existingDataAddress.getStringProperty("serverUrl"),
+                existingDataAddress.getStringProperty(EDC_NAMESPACE + "serverUrl")
+        );
+
+        String nodeIdSpec = firstNonBlank(
+                existingDataAddress.getStringProperty("nodeId"),
+                existingDataAddress.getStringProperty(EDC_NAMESPACE + "nodeId"),
+                existingDataAddress.getStringProperty("nodeIds"),
+                existingDataAddress.getStringProperty(EDC_NAMESPACE + "nodeIds")
+        );
+
         if (isCertificateBasedAuthentication && this.certificateService != null) {
             var csr = transferProcess.getDataDestination().getStringProperty("csr");
 
@@ -122,20 +141,21 @@ public class IndustrialConnectorDataFlow implements DataFlowController {
             var credentials = credentialsResult.getContent();
             var signedCertificate = certificateService.requestCertificate(csr, credentials.getUsername(), 365);
             var caChain = certificateService.getCertificateChain();
+
             var dataAddress = DataAddress.Builder.newInstance()
                     .type(transferType)
-                    .property(EDC_NAMESPACE + "endpoint", config.getSinkServiceUrl())
-                    .property(EDC_NAMESPACE + "topic", assetId)
-                    .property(EDC_NAMESPACE + "username", credentials.getUsername())
-                    .property(EDC_NAMESPACE + "certificate", signedCertificate.getContent())
-                    .property(EDC_NAMESPACE + "ca-chain", caChain.getContent())
+                    .property("endpoint", config.getSinkServiceUrl())
+                    .property("topic", assetId)
+                    .property("username", credentials.getUsername())
+                    .property("certificate", signedCertificate.getContent())
+                    .property("ca-chain", caChain.getContent())
+                    .property("serverUrl", serverUrl)
+                    .property("nodeIds", nodeIdSpec)
                     .build();
 
-            var response = DataFlowResponse.Builder.newInstance()
-                    .dataAddress(dataAddress)
-                    .build();
+            transferProcess.setContentDataAddress(dataAddress);
 
-            return StatusResult.success(response);
+            return getDataFlowResponseStatusResult(transferProcess);
 
         } else {
             var securityRequest = new MosquittoSecurityRequest();
@@ -148,18 +168,32 @@ public class IndustrialConnectorDataFlow implements DataFlowController {
             // The DataFlowResponse contains the DataAddress that will be returned to consumer
             var dataAddress = DataAddress.Builder.newInstance()
                     .type(transferType)
-                    .property(EDC_NAMESPACE + "endpoint", config.getSinkServiceUrl())
-                    .property(EDC_NAMESPACE + "topic", assetId)
-                    .property(EDC_NAMESPACE + "username", credentials.getUsername())
-                    .property(EDC_NAMESPACE + "password", credentials.getPassword())
+                    .property("endpoint", config.getSinkServiceUrl())
+                    .property("topic", assetId)
+                    .property("username", credentials.getUsername())
+                    .property("password", credentials.getPassword())
+                    .property("serverUrl", serverUrl)
+                    .property("nodeIds", nodeIdSpec)
                     .build();
 
-            var response = DataFlowResponse.Builder.newInstance()
-                    .dataAddress(dataAddress)
-                    .build();
+            transferProcess.setContentDataAddress(dataAddress);
 
-            return StatusResult.success(response);
+            return getDataFlowResponseStatusResult(transferProcess);
+        }
+    }
+
+    @NotNull
+    private StatusResult<DataFlowResponse> getDataFlowResponseStatusResult(TransferProcess transferProcess) {
+
+        if (transferFlowService != null) {
+            var success = transferFlowService.startTransfer(transferProcess);
+            if (success.failed()) {
+                transferFlowService.terminateTransfer(transferProcess);
+                return StatusResult.failure(ResponseStatus.FATAL_ERROR, "Failed to start transfer: " + success.getContent());
+            }
+            return success;
         }
 
+        return StatusResult.failure(ResponseStatus.FATAL_ERROR, "Failed to start transfer: Transfer flow not definied.");
     }
 }

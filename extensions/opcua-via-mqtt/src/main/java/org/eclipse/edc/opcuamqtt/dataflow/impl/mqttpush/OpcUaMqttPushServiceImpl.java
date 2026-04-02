@@ -15,6 +15,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static org.eclipse.edc.common.spi.helpers.Helpers.firstNonBlank;
+
 /**
  * Pushes values read from an OPC UA server to a provider-managed MQTT broker.
  *
@@ -263,18 +265,6 @@ public class OpcUaMqttPushServiceImpl implements OpcUaMqttPushService {
     public boolean isActiveForAsset(String assetId) {
         var pushTask = assetPushTasks.get(assetId);
         return pushTask != null && pushTask.isRunning();
-    }
-
-    private static String firstNonBlank(String... values) {
-        if (values == null) {
-            return null;
-        }
-        for (var v : values) {
-            if (v != null && !v.trim().isEmpty()) {
-                return v;
-            }
-        }
-        return null;
     }
 }
 

@@ -84,8 +84,7 @@ public class IndustrialConnectorResolverExtension implements ServiceExtension {
     @Override
     public void start() {
         var transferFlowServiceInstance = this.context.getService(TransferFlowService.class);
-        if (transferFlowServiceInstance == null) {
-            context.getMonitor().warning("TransferFlowService is not available. Industrial Connector Resolver Extension will not start.");
+        if (transferFlowServiceInstance == null || this.industrialDataFlow == null) {
             return;
         }
         this.industrialDataFlow.setDataFlow(transferFlowServiceInstance);

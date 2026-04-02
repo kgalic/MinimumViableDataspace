@@ -1,19 +1,15 @@
 package org.eclipse.edc.opcuamqtt.dataflow.impl;
-import org.eclipse.edc.common.spi.pki.PkiCertificateService;
 import org.eclipse.edc.common.spi.security.SecurityService;
-import org.eclipse.edc.common.spi.security.mosquitto.MosquittoCredentials;
 import org.eclipse.edc.common.spi.security.mosquitto.MosquittoSecurityRequest;
 import org.eclipse.edc.connector.controlplane.asset.spi.domain.Asset;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.DataFlowResponse;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.TransferProcess;
-import org.eclipse.edc.industrial.wss.IndustrialWebSocketService;
 import org.eclipse.edc.opcuamqtt.dataflow.TransferFlowService;
 import org.eclipse.edc.opcuamqtt.dataflow.impl.mqttpush.MqttBrokerConfig;
 import org.eclipse.edc.opcuamqtt.dataflow.impl.mqttpush.OpcUaMqttPushService;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.response.ResponseStatus;
 import org.eclipse.edc.spi.response.StatusResult;
-import org.eclipse.edc.spi.result.Result;
 import org.eclipse.edc.spi.types.domain.DataAddress;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,9 +30,7 @@ public class OpcUaMosquittoMqttTransferServiceImpl implements TransferFlowServic
     private final OpcUaMqttPushService opcUaPushService;
     private final MqttBrokerConfig brokerConfig;
     private final SecurityService securityService;
-    private final PkiCertificateService pkiCertificateService;
     private final Monitor monitor;
-    private IndustrialWebSocketService webSocketService;
 
     public OpcUaMosquittoMqttTransferServiceImpl(OpcUaMqttPushService opcUaPushService,
                                                  MqttBrokerConfig brokerConfig,
@@ -46,8 +40,6 @@ public class OpcUaMosquittoMqttTransferServiceImpl implements TransferFlowServic
         this.brokerConfig = brokerConfig;
         this.securityService = securityService;
         this.monitor = monitor;
-        this.pkiCertificateService = null;
-        this.webSocketService = null;
     }
 
 
@@ -177,26 +169,24 @@ public class OpcUaMosquittoMqttTransferServiceImpl implements TransferFlowServic
                 ? brokerConfig.getBrokerUrl()
                 : "tcp://localhost:1883";
 
-        String topicPattern = assetId + "/#";
-
-        // Use WebSocket for client-side execution if available
-        if (webSocketService != null && webSocketService.getActiveSessionCount() > 0) {
-            monitor.info("WebSocket service available with " + webSocketService.getActiveSessionCount() + " clients - sending OPC-UA read command");
-            String opcUaCommand = buildReadCommand(transferId, transferProcess.getContentDataAddress(), assetId, brokerUrl);
-            webSocketService.broadcast(opcUaCommand);
-            monitor.info("Sent OPC-UA read command to all WebSocket clients for transfer: " + transferId);
-        } else {
-            monitor.info("No WebSocket clients available - using direct OPC-UA connection");
-            opcUaPushService.startPushing(transferId, assetId, transferProcess.getContentDataAddress());
-        }
+        opcUaPushService.startPushing(transferId, assetId, transferProcess.getContentDataAddress());
 
         String authToken = UUID.randomUUID().toString();
         monitor.info("Stored MQTT EDR for transfer " + transferId + " - Topic: " + assetId + ", Broker: " + brokerUrl);
 
-        if (isCertificateBasedAuthentication && pkiCertificateService != null) {
-            return handleCertificateAuthentication(transferProcess, transferId, assetId, topicPattern, brokerUrl, authToken);
+        if (isCertificateBasedAuthentication) {
+            var username = transferProcess.getContentDataAddress().getStringProperty("username");
+            var caChain = transferProcess.getContentDataAddress().getStringProperty("ca-chain");
+            var certificate = transferProcess.getContentDataAddress().getStringProperty("certificate");
+            var topic = transferProcess.getContentDataAddress().getStringProperty("topic");
+
+            return handleCertificateAuthentication(username, caChain, certificate, topic, brokerUrl, authToken);
         } else {
-            return handlePasswordAuthentication(transferId, assetId, topicPattern, brokerUrl, authToken);
+            var topic = transferProcess.getContentDataAddress().getStringProperty("topic");
+            var username = transferProcess.getContentDataAddress().getStringProperty("username");
+            var password = transferProcess.getContentDataAddress().getStringProperty("password");
+
+            return handlePasswordAuthentication(username, password, topic, brokerUrl, authToken);
         }
     }
 
@@ -204,41 +194,21 @@ public class OpcUaMosquittoMqttTransferServiceImpl implements TransferFlowServic
      * Handles certificate-based MQTT authentication flow.
      */
     private StatusResult<DataFlowResponse> handleCertificateAuthentication(
-            TransferProcess transferProcess,
-            String transferId,
-            String assetId,
+            String username,
+            String caChain,
+            String certificate,
             String topicPattern,
             String brokerUrl,
             String authToken) {
-
-        var csr = transferProcess.getDataDestination().getStringProperty("csr");
-        if (csr == null) {
-            return StatusResult.failure(ResponseStatus.FATAL_ERROR, "No CSR provided for certificate-based authentication");
-        }
-
-        var username = pkiCertificateService.getCommonName(csr).getContent();
-        if (username == null) {
-            return StatusResult.failure(ResponseStatus.FATAL_ERROR, "Failed to extract username from CSR");
-        }
-
-        var securityRequest = new MosquittoSecurityRequest();
-        securityRequest.setUserName(username);
-        securityRequest.setTopic(topicPattern);
-        securityRequest.setTransferId(transferId);
-
-        Result<MosquittoCredentials> credentialsResult = securityService.provisionAccess(securityRequest);
-        var credentials = credentialsResult.getContent();
-        var signedCertificate = pkiCertificateService.requestCertificate(csr, credentials.getUsername(), 365);
-        var caChain = pkiCertificateService.getCertificateChain();
 
         var dataAddress = DataAddress.Builder.newInstance()
                 .type(OPCUAMQTT_TYPE)
                 .property(EDC_NAMESPACE + "endpoint", brokerUrl)
                 .property(EDC_NAMESPACE + "authToken", authToken)
-                .property(EDC_NAMESPACE + "topic", assetId)
-                .property(EDC_NAMESPACE + "username", credentials.getUsername())
-                .property(EDC_NAMESPACE + "certificate", signedCertificate.getContent())
-                .property(EDC_NAMESPACE + "ca-chain", caChain.getContent())
+                .property(EDC_NAMESPACE + "topic", topicPattern)
+                .property(EDC_NAMESPACE + "username", username)
+                .property(EDC_NAMESPACE + "certificate", certificate)
+                .property(EDC_NAMESPACE + "ca-chain", caChain)
                 .build();
 
         var response = DataFlowResponse.Builder.newInstance()
@@ -252,26 +222,20 @@ public class OpcUaMosquittoMqttTransferServiceImpl implements TransferFlowServic
      * Handles password-based MQTT authentication flow.
      */
     private StatusResult<DataFlowResponse> handlePasswordAuthentication(
-            String transferId,
-            String assetId,
+            String username,
+            String password,
             String topicPattern,
             String brokerUrl,
             String authToken) {
 
-        var securityRequest = new MosquittoSecurityRequest();
-        securityRequest.setTopic(topicPattern);
-        securityRequest.setTransferId(transferId);
-
-        Result<MosquittoCredentials> credentialsResult = securityService.provisionAccess(securityRequest);
-        var credentials = credentialsResult.getContent();
 
         var dataAddress = DataAddress.Builder.newInstance()
                 .type(OPCUAMQTT_TYPE)
                 .property(EDC_NAMESPACE + "endpoint", brokerUrl)
                 .property(EDC_NAMESPACE + "authToken", authToken)
-                .property(EDC_NAMESPACE + "topic", assetId)
-                .property(EDC_NAMESPACE + "username", credentials.getUsername())
-                .property(EDC_NAMESPACE + "password", credentials.getPassword())
+                .property(EDC_NAMESPACE + "topic", topicPattern)
+                .property(EDC_NAMESPACE + "username", username)
+                .property(EDC_NAMESPACE + "password", password)
                 .build();
 
         var response = DataFlowResponse.Builder.newInstance()
