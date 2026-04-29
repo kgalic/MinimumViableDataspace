@@ -1,7 +1,7 @@
-package org.eclipse.edc.opcuamqtt.dataflow.impl.mqttpush;
+package org.eclipse.edc.industrial.local.dataflow.impl.mqttpush;
 
 import org.eclipse.edc.common.spi.mqttclient.MqttClient;
-import org.eclipse.edc.opcuamqtt.dataflow.impl.opcua.OpcUaClientService;
+import org.eclipse.edc.industrial.local.dataflow.impl.opcua.OpcUaClientService;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.types.domain.DataAddress;
 

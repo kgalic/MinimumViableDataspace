@@ -23,7 +23,7 @@ dependencies {
     runtimeOnly(project(":extensions:dcp-impl")) // some patches/impls for DCP
     runtimeOnly(project(":extensions:catalog-node-resolver")) // to trigger the federated catalog
     runtimeOnly(project(":extensions:opcua")) // OPC UA client/metadata support
-    runtimeOnly(project(":extensions:opcua-via-mqtt")) // OPC UA via MQTT dataflow support
+    runtimeOnly(project(":extensions:industrial-connector-local")) // Industrial Connector Local dataflow support
     runtimeOnly(project(":extensions:industrial-connector-wss")) // Industrial WebSocket Secure server
     runtimeOnly(project(":extensions:industrial-connector-resolver")) // Industrial Connector Resolver extension
     runtimeOnly(libs.edc.bom.controlplane)

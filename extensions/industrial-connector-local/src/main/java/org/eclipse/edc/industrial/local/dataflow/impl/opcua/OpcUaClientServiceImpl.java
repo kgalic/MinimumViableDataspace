@@ -1,4 +1,4 @@
-package org.eclipse.edc.opcuamqtt.dataflow.impl.opcua;
+package org.eclipse.edc.industrial.local.dataflow.impl.opcua;
 
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.milo.opcua.sdk.client.OpcUaClient;

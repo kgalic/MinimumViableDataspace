@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     implementation(project(":extensions:common-spi"))
-    implementation(project(":extensions:opcua-via-mqtt"))
+    implementation(project(":extensions:industrial-connector-local"))
     implementation(libs.edc.boot)
     implementation(libs.edc.core.runtime)
 

@@ -1,4 +1,4 @@
-package org.eclipse.edc.opcuamqtt.dataflow.impl.mqttpush;
+package org.eclipse.edc.industrial.local.dataflow.impl.mqttpush;
 
 import org.eclipse.edc.spi.types.domain.DataAddress;
 

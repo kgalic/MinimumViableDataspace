@@ -1,14 +1,14 @@
-package org.eclipse.edc.opcuamqtt;
+package org.eclipse.edc.industrial.local;
 
 import org.eclipse.edc.common.spi.config.mosquitto.IndustrialConnectorResolverConfigServiceImpl;
 import org.eclipse.edc.common.spi.dataflow.TransferFlowService;
-import org.eclipse.edc.opcuamqtt.dataflow.impl.OpcUaMosquittoMqttTransferFlowProvisionerServiceImpl;
+import org.eclipse.edc.industrial.local.dataflow.impl.OpcUaMosquittoMqttTransferFlowProvisionerServiceImpl;
 import org.eclipse.edc.runtime.metamodel.annotation.Extension;
 import org.eclipse.edc.runtime.metamodel.annotation.Provides;
 import org.eclipse.edc.spi.system.ServiceExtension;
 import org.eclipse.edc.spi.system.ServiceExtensionContext;
 
-import static org.eclipse.edc.opcuamqtt.OpcUaMqttExtension.NAME;
+import static org.eclipse.edc.industrial.local.OpcUaMqttExtension.NAME;
 
 @Provides(TransferFlowService.class)
 @Extension(value = NAME)

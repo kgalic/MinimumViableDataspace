@@ -1,4 +1,4 @@
-// extensions/opcua-via-mqtt/build.gradle.kts
+// extensions/industrial-connector-local/build.gradle.kts
 plugins {
     `java-library`
 }
