@@ -105,6 +105,7 @@ services:
       - "8193:8193"
       - "8194:8194"
       - "8195:8195"
+      - "8181:8181"
       - "12001:12001"
     volumes:
       - ./assets:/app/deployment/assets:ro
