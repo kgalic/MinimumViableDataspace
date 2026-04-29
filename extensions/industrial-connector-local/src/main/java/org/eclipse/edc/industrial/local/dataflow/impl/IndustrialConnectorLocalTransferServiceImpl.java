@@ -6,7 +6,7 @@ import org.eclipse.edc.connector.controlplane.asset.spi.domain.Asset;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.DataFlowResponse;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.TransferProcess;
 import org.eclipse.edc.industrial.local.dataflow.impl.mqttpush.MqttBrokerConfig;
-import org.eclipse.edc.industrial.local.dataflow.impl.mqttpush.OpcUaMqttPushService;
+import org.eclipse.edc.industrial.local.dataflow.impl.mqttpush.IndustrialConnectorLocalPushService;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.response.ResponseStatus;
 import org.eclipse.edc.spi.response.StatusResult;
@@ -17,22 +17,22 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * OPC-UA MQTT-specific implementation of the transfer flow service.
+ * Industrial Connector Local implementation of the transfer flow service.
  * Handles the lifecycle of OPC-UA MQTT data transfers including provisioning,
  * execution, and cleanup of MQTT broker credentials and permissions.
  */
-public class OpcUaMosquittoMqttTransferServiceImpl implements TransferFlowService {
+public class IndustrialConnectorLocalTransferServiceImpl implements TransferFlowService {
 
     private static final String OPCUAMQTT_TYPE = "opcuamqtt";
     private static final String EDC_NAMESPACE = "https://w3id.org/edc/v0.0.1/ns/";
     private static final String MQTT_PUSH_TYPE = "MQTT-PUSH";
 
-    private final OpcUaMqttPushService opcUaPushService;
+    private final IndustrialConnectorLocalPushService opcUaPushService;
     private final MqttBrokerConfig brokerConfig;
     private final SecurityService securityService;
     private final Monitor monitor;
 
-    public OpcUaMosquittoMqttTransferServiceImpl(OpcUaMqttPushService opcUaPushService,
+    public IndustrialConnectorLocalTransferServiceImpl(IndustrialConnectorLocalPushService opcUaPushService,
                                                  MqttBrokerConfig brokerConfig,
                                                  SecurityService securityService,
                                                  Monitor monitor) {

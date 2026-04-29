@@ -2,7 +2,7 @@ package org.eclipse.edc.industrial.local.dataflow.impl.opcua;
 
 /**
  * Client interface for reading values from OPC UA servers.
- * This is a self-contained mqttclient specific to the MQTT extension.
+ * This is a self-contained client specific to the industrial connector local extension.
  */
 public interface OpcUaClientService {
 
@@ -16,4 +16,3 @@ public interface OpcUaClientService {
      */
     Object readValue(String endpoint, String nodeId) throws Exception;
 }
-

@@ -2,7 +2,7 @@ package org.eclipse.edc.industrial.local.dataflow.impl.mqttpush;
 
 import org.eclipse.edc.spi.types.domain.DataAddress;
 
-public interface OpcUaMqttPushService {
+public interface IndustrialConnectorLocalPushService {
 
     /**
      * Starts pushing OPC UA values to MQTT for the given asset.
@@ -39,5 +39,3 @@ public interface OpcUaMqttPushService {
      */
     boolean isActiveForAsset(String assetId);
 }
-
-

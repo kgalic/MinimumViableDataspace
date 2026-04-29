@@ -11,7 +11,7 @@ import org.eclipse.edc.common.spi.security.mosquitto.MosquittoCredentials;
 import org.eclipse.edc.common.spi.security.mosquitto.MosquittoSecurityRequest;
 import org.eclipse.edc.common.spi.security.mosquitto.MqttSecurityServiceImpl;
 import org.eclipse.edc.industrial.local.dataflow.impl.mqttpush.MqttBrokerConfig;
-import org.eclipse.edc.industrial.local.dataflow.impl.mqttpush.OpcUaMqttPushService;
+import org.eclipse.edc.industrial.local.dataflow.impl.mqttpush.IndustrialConnectorLocalPushService;
 import org.eclipse.edc.industrial.local.dataflow.impl.mqttpush.OpcUaMqttPushServiceImpl;
 import org.eclipse.edc.industrial.local.dataflow.impl.opcua.OpcUaClientService;
 import org.eclipse.edc.industrial.local.dataflow.impl.opcua.OpcUaClientServiceImpl;
@@ -24,18 +24,18 @@ import org.eclipse.edc.spi.monitor.Monitor;
  * based on the provided configuration, handling both certificate-based and
  * credential-based authentication mechanisms.
  */
-public class OpcUaMosquittoMqttTransferFlowProvisionerServiceImpl implements TransferFlowProvisionerService {
+public class IndustrialConnectorLocalTransferFlowProvisionerServiceImpl implements TransferFlowProvisionerService {
 
     private final TransferFlowService transferFlowService;
 
     /**
-     * Creates an OpcUaMosquittoMqttTransferFlowProvisionerServiceImpl that instantiates
+     * Creates an IndustrialConnectorLocalTransferFlowProvisionerServiceImpl that instantiates
      * the appropriate MQTT and OPC UA clients based on configuration.
      *
      * @param configService the industrial connector resolver configuration service
      * @param monitor for logging
      */
-    public OpcUaMosquittoMqttTransferFlowProvisionerServiceImpl(Monitor monitor,
+    public IndustrialConnectorLocalTransferFlowProvisionerServiceImpl(Monitor monitor,
                                                                 IndustrialConnectorResolverConfigService<?> configService) {
         IndustrialConnectorResolverConfigImpl config = configService.getConfig();
         
@@ -49,7 +49,7 @@ public class OpcUaMosquittoMqttTransferFlowProvisionerServiceImpl implements Tra
         MqttBrokerConfig brokerConfig = createMqttBrokerConfig(config);
         
         // Create OPC UA MQTT push service
-        OpcUaMqttPushService opcUaPushService = new OpcUaMqttPushServiceImpl(
+        IndustrialConnectorLocalPushService opcUaPushService = new OpcUaMqttPushServiceImpl(
                 opcUaClient,
                 pushMqttClient,
                 brokerConfig,
@@ -61,14 +61,14 @@ public class OpcUaMosquittoMqttTransferFlowProvisionerServiceImpl implements Tra
         SecurityService<MosquittoCredentials, MosquittoSecurityRequest> securityService = new MqttSecurityServiceImpl(pushMqttClient, monitor);
         
         // Create and store the transfer flow service
-        this.transferFlowService = new OpcUaMosquittoMqttTransferServiceImpl(
+        this.transferFlowService = new IndustrialConnectorLocalTransferServiceImpl(
                 opcUaPushService,
                 brokerConfig,
                 (SecurityService) securityService,
                 monitor
         );
         
-        monitor.info("OPC UA Mosquitto MQTT Transfer Flow Provisioner initialized with broker: " + brokerConfig.getBrokerUrl());
+        monitor.info("Industrial Connector Local Transfer Flow Provisioner initialized with broker: " + brokerConfig.getBrokerUrl());
     }
 
     /**

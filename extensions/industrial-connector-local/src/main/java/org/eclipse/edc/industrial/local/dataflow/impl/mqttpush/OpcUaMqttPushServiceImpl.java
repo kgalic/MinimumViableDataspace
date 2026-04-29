@@ -27,7 +27,7 @@ import static org.eclipse.edc.common.spi.helpers.Helpers.firstNonBlank;
  * - Consumers receive MQTT broker credentials and topic permissions during transfer
  * - Supports single or multiple OPC UA nodes with periodic push intervals
  */
-public class OpcUaMqttPushServiceImpl implements OpcUaMqttPushService {
+public class OpcUaMqttPushServiceImpl implements IndustrialConnectorLocalPushService {
 
     private static final String EDC_NAMESPACE = "https://w3id.org/edc/v0.0.1/ns/";
 
@@ -267,4 +267,3 @@ public class OpcUaMqttPushServiceImpl implements OpcUaMqttPushService {
         return pushTask != null && pushTask.isRunning();
     }
 }
-
