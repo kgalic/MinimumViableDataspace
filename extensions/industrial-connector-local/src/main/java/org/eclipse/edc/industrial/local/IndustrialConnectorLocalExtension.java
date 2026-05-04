@@ -2,7 +2,7 @@ package org.eclipse.edc.industrial.local;
 
 import org.eclipse.edc.common.spi.config.mosquitto.IndustrialConnectorResolverConfigServiceImpl;
 import org.eclipse.edc.common.spi.dataflow.TransferFlowService;
-import org.eclipse.edc.industrial.local.dataflow.impl.IndustrialConnectorLocalTransferFlowProvisionerServiceImpl;
+import org.eclipse.edc.industrial.local.dataflow.IndustrialConnectorLocalTransferFlowProvisionerServiceImpl;
 import org.eclipse.edc.runtime.metamodel.annotation.Extension;
 import org.eclipse.edc.runtime.metamodel.annotation.Provides;
 import org.eclipse.edc.spi.system.ServiceExtension;

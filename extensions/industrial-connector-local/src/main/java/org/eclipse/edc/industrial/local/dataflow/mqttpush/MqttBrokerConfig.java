@@ -1,5 +1,5 @@
 
-package org.eclipse.edc.industrial.local.dataflow.impl.mqttpush;
+package org.eclipse.edc.industrial.local.dataflow.mqttpush;
 
 /**
  * Configuration for the provider-managed MQTT broker.

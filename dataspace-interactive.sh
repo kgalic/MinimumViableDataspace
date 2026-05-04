@@ -31,7 +31,7 @@ PKI_API_KEY="ff94fd70-7f06-45ed-98af-046abf99600d"
 # IDs and other environment variables (defaults from Postman environment)
 CONSUMER_ID="did:web:localhost%3A7083"
 PROVIDER_ID="did:web:localhost%3A7093"
-PROVIDER_QNA_DSP_INTERNAL="http://provider-connector-qna:8192"
+PROVIDER_QNA_DSP_INTERNAL="http://localhost:8192"
 
 # Runtime variables
 ASSET_ID=""

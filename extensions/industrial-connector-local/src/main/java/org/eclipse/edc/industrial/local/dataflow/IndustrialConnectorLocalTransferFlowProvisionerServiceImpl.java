@@ -1,4 +1,4 @@
-package org.eclipse.edc.industrial.local.dataflow.impl;
+package org.eclipse.edc.industrial.local.dataflow;
 
 import org.eclipse.edc.common.spi.config.IndustrialConnectorResolverConfigImpl;
 import org.eclipse.edc.common.spi.config.IndustrialConnectorResolverConfigService;
@@ -10,11 +10,11 @@ import org.eclipse.edc.common.spi.security.SecurityService;
 import org.eclipse.edc.common.spi.security.mosquitto.MosquittoCredentials;
 import org.eclipse.edc.common.spi.security.mosquitto.MosquittoSecurityRequest;
 import org.eclipse.edc.common.spi.security.mosquitto.MqttSecurityServiceImpl;
-import org.eclipse.edc.industrial.local.dataflow.impl.mqttpush.MqttBrokerConfig;
-import org.eclipse.edc.industrial.local.dataflow.impl.mqttpush.IndustrialConnectorLocalPushService;
-import org.eclipse.edc.industrial.local.dataflow.impl.mqttpush.OpcUaMqttPushServiceImpl;
-import org.eclipse.edc.industrial.local.dataflow.impl.opcua.OpcUaClientService;
-import org.eclipse.edc.industrial.local.dataflow.impl.opcua.OpcUaClientServiceImpl;
+import org.eclipse.edc.industrial.local.dataflow.mqttpush.IndustrialConnectorLocalPushService;
+import org.eclipse.edc.industrial.local.dataflow.mqttpush.MqttBrokerConfig;
+import org.eclipse.edc.industrial.local.dataflow.mqttpush.OpcUaMqttPushServiceImpl;
+import org.eclipse.edc.industrial.local.dataflow.opcua.OpcUaClientService;
+import org.eclipse.edc.industrial.local.dataflow.opcua.OpcUaClientServiceImpl;
 import org.eclipse.edc.spi.monitor.Monitor;
 
 /**

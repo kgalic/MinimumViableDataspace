@@ -1,12 +1,12 @@
-package org.eclipse.edc.industrial.local.dataflow.impl;
+package org.eclipse.edc.industrial.local.dataflow;
 import org.eclipse.edc.common.spi.dataflow.TransferFlowService;
 import org.eclipse.edc.common.spi.security.SecurityService;
 import org.eclipse.edc.common.spi.security.mosquitto.MosquittoSecurityRequest;
 import org.eclipse.edc.connector.controlplane.asset.spi.domain.Asset;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.DataFlowResponse;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.TransferProcess;
-import org.eclipse.edc.industrial.local.dataflow.impl.mqttpush.MqttBrokerConfig;
-import org.eclipse.edc.industrial.local.dataflow.impl.mqttpush.IndustrialConnectorLocalPushService;
+import org.eclipse.edc.industrial.local.dataflow.mqttpush.IndustrialConnectorLocalPushService;
+import org.eclipse.edc.industrial.local.dataflow.mqttpush.MqttBrokerConfig;
 import org.eclipse.edc.spi.monitor.Monitor;
 import org.eclipse.edc.spi.response.ResponseStatus;
 import org.eclipse.edc.spi.response.StatusResult;
