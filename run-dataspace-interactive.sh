@@ -12,7 +12,6 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEPLOYMENT_DIR="${SCRIPT_DIR}/deployment"
 COMPOSE_FILE="${DEPLOYMENT_DIR}/docker-compose.dataspace.yml"
-SEED_SCRIPT="${SCRIPT_DIR}/seed-mqtt-docker.sh"
 
 # API Configuration
 API_KEY="password"
@@ -125,14 +124,14 @@ start_dataspace() {
 
     cd "$DEPLOYMENT_DIR"
 
-    # Start docker compose
-    log_info "Building and starting services..."
-    docker-compose -f docker-compose.dataspace.yml --profile tls up -d
+    # Start docker compose with the selected profile
+    log_info "Building and starting services with profile: $DOCKER_PROFILE..."
+    docker-compose -f docker-compose.dataspace.yml --profile "$DOCKER_PROFILE" up -d
 
     cd "$SCRIPT_DIR"
     echo $SCRIPT_DIR
 
-    log_success "Dataspace is up and running"
+    log_success "Dataspace is up and running with $DOCKER_PROFILE profile"
 }
 
 stop_dataspace() {
@@ -151,7 +150,8 @@ run_seed_script() {
     echo "Running seed script..."
 
     # Execute the seed script
-    bash ./seed-mqtt-docker.sh
+    bash ./seed.sh
+    bash ./seed-mqtt.sh
 
     if [ $? -eq 0 ]; then
         echo "✓ Seed script completed successfully"
@@ -584,6 +584,28 @@ main() {
 
     case $setup_choice in
         1)
+            # Ask user for TLS preference
+            echo ""
+            echo "Select MQTT configuration:"
+            echo "1. Plain MQTT (tcp://localhost:1883) - no certificates"
+            echo "2. TLS MQTT (ssl://localhost:8883) - with certificates"
+            read -p "Select [1-2]: " tls_choice
+
+            case $tls_choice in
+                1)
+                    DOCKER_PROFILE="plain"
+                    log_info "Selected plain MQTT configuration"
+                    ;;
+                2)
+                    DOCKER_PROFILE="tls"
+                    log_info "Selected TLS MQTT configuration"
+                    ;;
+                *)
+                    log_error "Invalid TLS choice"
+                    exit 1
+                    ;;
+            esac
+
             # Check if containers are already running
             if docker-compose -f "$COMPOSE_FILE" ps 2>/dev/null | grep -q "Up"; then
                 log_warning "Docker Compose containers are already running. Stopping them first..."
