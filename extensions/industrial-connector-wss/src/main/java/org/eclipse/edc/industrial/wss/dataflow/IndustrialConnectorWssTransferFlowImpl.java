@@ -147,50 +147,16 @@ public class IndustrialConnectorWssTransferFlowImpl implements TransferFlowServi
         );
         
         String pushInterval = getProperty(contentDataAddress, "pushInterval", "5000");
-        
-        String username = contentDataAddress.getStringProperty("username");
-        if (username == null) {
-            username = contentDataAddress.getStringProperty(EDC_NAMESPACE + "username");
-        }
-        
-        String password = contentDataAddress.getStringProperty("password");
-        if (password == null) {
-            password = contentDataAddress.getStringProperty(EDC_NAMESPACE + "password");
-        }
-        
-        String certificate = contentDataAddress.getStringProperty("certificate");
-        if (certificate == null) {
-            certificate = contentDataAddress.getStringProperty(EDC_NAMESPACE + "certificate");
-        }
-        
-        String caChain = contentDataAddress.getStringProperty("ca-chain");
-        if (caChain == null) {
-            caChain = contentDataAddress.getStringProperty(EDC_NAMESPACE + "ca-chain");
-        }
 
         // Build JSON command with all necessary details
         StringBuilder commandBuilder = new StringBuilder();
         commandBuilder.append("{");
         commandBuilder.append("\"type\":\"opcua_read_request\",");
         commandBuilder.append("\"transferId\":\"").append(transferId).append("\",");
-        commandBuilder.append("\"opcuaServer\":\"").append(serverUrl).append("\",");
         commandBuilder.append("\"nodeIds\":[\"").append(nodeIdSpec).append("\"],");
-        commandBuilder.append("\"mqttBroker\":\"").append(brokerUrl).append("\",");
         commandBuilder.append("\"mqttTopic\":\"").append(assetId).append("\",");
         commandBuilder.append("\"pushInterval\":").append(pushInterval).append(",");
-        
-        // Add authentication details
-        if (certificate != null && caChain != null) {
-            commandBuilder.append("\"authType\":\"certificate\",");
-            commandBuilder.append("\"username\":\"").append(escapeJson(username)).append("\",");
-            commandBuilder.append("\"certificate\":\"").append(escapeJson(certificate)).append("\",");
-            commandBuilder.append("\"caChain\":\"").append(escapeJson(caChain)).append("\",");
-        } else if (username != null && password != null) {
-            commandBuilder.append("\"authType\":\"password\",");
-            commandBuilder.append("\"username\":\"").append(escapeJson(username)).append("\",");
-            commandBuilder.append("\"password\":\"").append(escapeJson(password)).append("\",");
-        }
-        
+
         commandBuilder.append("\"timestamp\":\"").append(java.time.Instant.now().toString()).append("\"");
         commandBuilder.append("}");
 
