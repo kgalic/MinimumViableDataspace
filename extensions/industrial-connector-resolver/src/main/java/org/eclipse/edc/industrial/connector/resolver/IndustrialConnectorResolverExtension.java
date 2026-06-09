@@ -60,8 +60,6 @@ public class IndustrialConnectorResolverExtension implements ServiceExtension {
             return;
         }
 
-        monitor.info("Industrial WebSocket Extension is enabled");
-
         if (config.getPkiEndpointKey() == null || config.getPkiEndpointUrl() == null) {
             monitor.warning("PKI endpoint URL or key is not configured. PKI Certificate Service will not be registered.");
             return;
