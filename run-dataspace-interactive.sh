@@ -151,7 +151,7 @@ run_seed_script() {
 
     # Execute the seed script
     bash ./seed.sh
-    bash ./seed-mqtt.sh
+    OPC_SERVER_URL="${OPC_SERVER_URL:-opc.tcp://opcua-server:4840}" bash ./seed-mqtt.sh
 
     if [ $? -eq 0 ]; then
         echo "✓ Seed script completed successfully"

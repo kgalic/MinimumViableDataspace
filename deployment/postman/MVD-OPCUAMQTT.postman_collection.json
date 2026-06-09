@@ -902,7 +902,7 @@
     },
     {
       "key": "OPC_SERVER_URL",
-      "value": "opc.tcp://127.0.0.1:4840"
+      "value": "opc.tcp://localhost:4840"
     },
     {
       "key": "OPC_SERVER_USERNAME",
