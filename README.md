@@ -351,34 +351,7 @@ seed-mqtt.sh                         # Seed OPC UA MQTT assets via Postman/newma
 ```
 
 ---
+This README focuses on the architecture, extension layout, and runtime behavior of the Industrial Connector.
 
-## Monitoring the Data Stream
-
-Once a transfer is active you can verify data is flowing by subscribing to the MQTT broker:
-
-```bash
-# Plain MQTT
-mosquitto_sub -h localhost -p 1883 -u <username> -P <password> -t '<assetId>/#' -v
-
-# TLS MQTT
-mosquitto_sub -h localhost -p 8883 \
-  --cafile deployment/mosquitto-dynsec/certs/ca-chain.cert.pem \
-  --cert <consumer-cert.pem> \
-  --key <consumer-key.pem> \
-  -t '<assetId>/#' -v
-```
-
-The broker URL, topic, and credentials are all returned in the EDR (step 5 of the interactive menu).
-
----
-
-## Troubleshooting
-
-| Symptom | Likely Cause |
-|---------|-------------|
-| Transfer stays in `STARTING` | OPC UA server unreachable; check `edc.opcua.*` server URL settings |
-| Transfer fails with "No CSR provided" | TLS auth is enabled but no CSR was generated before initiating the transfer |
-| WebSocket transfer immediately fails | WSS client application is not connected; ensure it is running and connected to port `8181` |
-| Mosquitto Dynamic Security error | Check admin credentials (`edc.opcua.mqtt.admin.*`) match the `dynamic-security.json` config |
-| DID resolution failure | Ensure `nginx` container is running on port `9876` serving the correct `did.json` |
-
+For installation, configuration, seeding, and day-to-day usage instructions, see [SETUP.md](./SETUP.md).
+For running, see [RUNNING.md](./docs/RUNNING.md).

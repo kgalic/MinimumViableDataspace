@@ -1,8 +1,8 @@
-# Minimum Viable Dataspace — OPC-UA Extension Guide
+# Minimum Viable Dataspace — Step-by-Step Running Guide
 
-First, check the [README](../README.md) to set up the solution.
+First, check the root [README](../README.md) for architecture context and the root [SETUP.md](../SETUP.md) for installation and runtime setup.
 
-The solution can be run as a standalone application (console app) or in a Docker container. Regardless of the chosen runtime mode, dependencies must be started separately using the `run-local-dependencies.sh` script. Docker must be installed on the host machine.
+This guide walks through the solution step by step in different runtime modes. The solution can be run as a standalone application (console app) or in a Docker container. Regardless of the chosen runtime mode, dependencies must be started separately using the `run-local-dependencies.sh` script. Docker must be installed on the host machine.
 
 This ensures that the OPC-UA server, Nginx, and the Mosquitto MQTT broker are all running.
 
@@ -196,3 +196,4 @@ The response now includes the **certificate chain**, the **signed certificate**,
 The WebSocket setup outsources communication with the OPC-UA server and the MQTT broker push operations to an external application — **edc-industrial-connector-wss-client** — available in the same GitHub organization as this repository.
 
 To enable WebSocket mode, set `wss.enabled=true` in the connector configuration and follow the setup instructions in the `edc-industrial-connector-wss-client` repository.
+
