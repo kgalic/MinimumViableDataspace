@@ -1,7 +1,6 @@
 package org.eclipse.edc.industrial.local.dataflow;
 import org.eclipse.edc.common.spi.dataflow.TransferFlowService;
 import org.eclipse.edc.common.spi.security.SecurityService;
-import org.eclipse.edc.common.spi.security.mosquitto.MosquittoSecurityRequest;
 import org.eclipse.edc.connector.controlplane.asset.spi.domain.Asset;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.DataFlowResponse;
 import org.eclipse.edc.connector.controlplane.transfer.spi.types.TransferProcess;
