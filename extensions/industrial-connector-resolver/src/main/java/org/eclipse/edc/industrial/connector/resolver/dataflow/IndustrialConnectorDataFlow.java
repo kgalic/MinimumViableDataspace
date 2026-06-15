@@ -204,6 +204,10 @@ public class IndustrialConnectorDataFlow implements DataFlowController {
         String roleName = "edc-role-" + transferId;
 
         try {
+            var success = getTerminateTransferStatusResult(transferProcess);
+            if (success.failed()) {
+                return StatusResult.failure(ResponseStatus.FATAL_ERROR, "Failed to terminate transfer process");
+            }
             var securityRequest = new MosquittoSecurityRequest();
             securityRequest.setUserName(username);
             securityRequest.setRoleName(roleName);
@@ -214,7 +218,7 @@ public class IndustrialConnectorDataFlow implements DataFlowController {
                 return StatusResult.failure(ResponseStatus.FATAL_ERROR, "Failed to revoke access: " + revokeResult.getFailureDetail());
             }
 
-            return getTerminateTransferStatusResult(transferProcess);
+            return success;
         } catch (Exception e) {
             return StatusResult.failure(ResponseStatus.FATAL_ERROR, "Failed to revoke access: " + e.getMessage());
         }
