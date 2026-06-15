@@ -78,32 +78,16 @@ public class IndustrialConnectorLocalTransferServiceImpl implements TransferFlow
     @Override
     @NotNull
     public StatusResult<Void> suspendTransfer(@NotNull TransferProcess transferProcess) {
+        opcUaPushService.stopPushing(transferProcess.getId());
+        monitor.info("Suspended MQTT pushing for transfer " + transferProcess.getId());
         return StatusResult.success();
     }
 
     @Override
     @NotNull
     public StatusResult<Void> terminateTransfer(@NotNull TransferProcess transferProcess) {
-        String transferId = transferProcess.getId();
-        opcUaPushService.stopPushing(transferId);
-
-        String username = "edc-user-" + transferId;
-        String roleName = "edc-role-" + transferId;
-        monitor.info("Cleaning up Mosquitto user " + username + " and role " + roleName);
-
-        var revokeRequest = new MosquittoSecurityRequest();
-        revokeRequest.setUserName(username);
-        revokeRequest.setRoleName(roleName);
-        revokeRequest.setTopic(transferProcess.getAssetId());
-
-        var cleanupResult = securityService.revokeAccess(revokeRequest);
-        if (cleanupResult.failed()) {
-            monitor.warning("Failed to clean up Mosquitto user and role: " + cleanupResult.getFailureDetail());
-        } else {
-            monitor.info("Cleaned up Mosquitto user " + username + " and role " + roleName);
-        }
-
-        monitor.info("Removed MQTT EDR for transfer " + transferId);
+        opcUaPushService.stopPushing(transferProcess.getId());
+        monitor.info("Terminated MQTT pushing for transfer " + transferProcess.getId());
         return StatusResult.success();
     }
 

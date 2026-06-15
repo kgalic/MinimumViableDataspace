@@ -8,10 +8,11 @@ public class IndustrialConnectorDataTypesImpl implements IndustrialConnectorData
 
     private static final String OPCUAMQTT_TYPE = "opcuamqtt";
     private static final String OPCUA_TYPE = "opcua";
+    private static final String MQTT_PUSH = "mqtt-push";
 
     @Override
     public Set<String> getSupportedDataTypes() {
-        return Set.of(OPCUAMQTT_TYPE, OPCUA_TYPE);
+        return Set.of(OPCUAMQTT_TYPE, OPCUA_TYPE, MQTT_PUSH);
     }
 
     @Override

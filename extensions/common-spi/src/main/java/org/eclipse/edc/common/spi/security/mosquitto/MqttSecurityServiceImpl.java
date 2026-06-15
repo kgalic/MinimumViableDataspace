@@ -148,18 +148,12 @@ public class MqttSecurityServiceImpl implements SecurityService<MosquittoCredent
             this.mqttClient.subscribe(RESPONSE_TOPIC);
 
             // Delete user
-            MosquittoCommand.Command deleteUserCmd = new MosquittoCommand.Command();
-            deleteUserCmd.setCommand("deleteClient");
-            deleteUserCmd.setUsername(request.getUserName());
-            publishCommand(deleteUserCmd);
+            publishCommand(MosquittoCommand.Command.deleteClient(request.getUserName()));
             waitForResponse(responseFutureHolder[0], "Delete user");
 
             // Delete role
             responseFutureHolder[0] = new CompletableFuture<>();
-            MosquittoCommand.Command deleteRoleCmd = new MosquittoCommand.Command();
-            deleteRoleCmd.setCommand("deleteRole");
-            deleteRoleCmd.setRolename(request.getRoleName());
-            publishCommand(deleteRoleCmd);
+            publishCommand(MosquittoCommand.Command.deleteRole(request.getRoleName()));
             waitForResponse(responseFutureHolder[0], "Delete role");
 
             this.mqttClient.disconnect();

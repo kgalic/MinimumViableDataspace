@@ -124,8 +124,9 @@ public class OpcUaMqttPushServiceImpl implements IndustrialConnectorLocalPushSer
                         jsonPayload.getBytes(StandardCharsets.UTF_8),
                         brokerConfig.getUsername(), brokerConfig.getPassword());
 
+                var activeTask = assetPushTasks.get(assetId);
                 monitor.debug("Published OPC UA data to MQTT topic '" + assetId + "' for " +
-                        assetPushTasks.get(assetId).getTransferCount() + " active transfer(s)");
+                        (activeTask != null ? activeTask.getTransferCount() : "?") + " active transfer(s)");
             } catch (Exception e) {
                 monitor.severe("Failed to publish OPC UA data to MQTT for asset " + assetId, e);
             }

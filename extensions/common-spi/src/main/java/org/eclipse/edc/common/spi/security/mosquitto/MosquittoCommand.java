@@ -137,5 +137,19 @@ public class MosquittoCommand {
             cmd.rolename = rolename;
             return cmd;
         }
+
+        public static Command deleteClient(String username) {
+            Command cmd = new Command();
+            cmd.command = "deleteClient";
+            cmd.username = username;
+            return cmd;
+        }
+
+        public static Command deleteRole(String rolename) {
+            Command cmd = new Command();
+            cmd.command = "deleteRole";
+            cmd.rolename = rolename;
+            return cmd;
+        }
     }
 }

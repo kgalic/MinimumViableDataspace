@@ -59,12 +59,12 @@ public class IndustrialConnectorDataFlow implements DataFlowController {
 
     @Override
     public org.eclipse.edc.spi.response.StatusResult<Void> suspend(TransferProcess transferProcess) {
-        return null;
+        return revokeTransferAccess(transferProcess);
     }
 
     @Override
     public org.eclipse.edc.spi.response.StatusResult<Void> terminate(TransferProcess transferProcess) {
-        return null;
+        return revokeTransferAccess(transferProcess);
     }
 
     @Override
@@ -182,6 +182,44 @@ public class IndustrialConnectorDataFlow implements DataFlowController {
         }
     }
 
+    private StatusResult<Void> revokeTransferAccess(TransferProcess transferProcess) {
+        var contentDataAddress = transferProcess.getContentDataAddress();
+        if (contentDataAddress == null) {
+            return StatusResult.failure(ResponseStatus.FATAL_ERROR, "No content data address available for revocation");
+        }
+
+        var transferId = transferProcess.getId();
+
+        // Extract username from the content data address (was stored during provisioning)
+        String username = firstNonBlank(
+                contentDataAddress.getStringProperty("username"),
+                contentDataAddress.getStringProperty(EDC_NAMESPACE + "username")
+        );
+
+        if (username == null) {
+            return StatusResult.failure(ResponseStatus.FATAL_ERROR, "No username found in content data address");
+        }
+
+        // Role name follows the same pattern as in provisionAccess
+        String roleName = "edc-role-" + transferId;
+
+        try {
+            var securityRequest = new MosquittoSecurityRequest();
+            securityRequest.setUserName(username);
+            securityRequest.setRoleName(roleName);
+
+            Result<Void> revokeResult = securityService.revokeAccess(securityRequest);
+
+            if (revokeResult.failed()) {
+                return StatusResult.failure(ResponseStatus.FATAL_ERROR, "Failed to revoke access: " + revokeResult.getFailureDetail());
+            }
+
+            return getTerminateTransferStatusResult(transferProcess);
+        } catch (Exception e) {
+            return StatusResult.failure(ResponseStatus.FATAL_ERROR, "Failed to revoke access: " + e.getMessage());
+        }
+    }
+
     @NotNull
     private StatusResult<DataFlowResponse> getDataFlowResponseStatusResult(TransferProcess transferProcess) {
 
@@ -195,5 +233,19 @@ public class IndustrialConnectorDataFlow implements DataFlowController {
         }
 
         return StatusResult.failure(ResponseStatus.FATAL_ERROR, "Failed to start transfer: Transfer flow not definied.");
+    }
+
+    @NotNull
+    private StatusResult<Void> getTerminateTransferStatusResult(TransferProcess transferProcess) {
+
+        if (transferFlowService != null) {
+            var success = transferFlowService.terminateTransfer(transferProcess);
+            if (success.failed()) {
+                return StatusResult.failure(ResponseStatus.FATAL_ERROR, "Failed to terminate transfer: " + success.getFailureDetail());
+            }
+            return success;
+        }
+
+        return StatusResult.failure(ResponseStatus.FATAL_ERROR, "Failed to terminate transfer: Transfer flow not definied.");
     }
 }

@@ -79,47 +79,13 @@ public class IndustrialConnectorWssTransferFlowImpl implements TransferFlowServi
     @Override
     @NotNull
     public StatusResult<Void> suspendTransfer(@NotNull TransferProcess transferProcess) {
-        String transferId = transferProcess.getId();
-        
-        // Send suspend command to the client
-        String clientId = activeTransfers.get(transferId);
-        if (clientId != null) {
-            String suspendCommand = buildSuspendCommand(transferId);
-            boolean sent = webSocketService.sendToClient(clientId, suspendCommand);
-            
-            if (sent) {
-                monitor.info("Sent suspend command for transfer " + transferId + " to client " + clientId);
-                return StatusResult.success();
-            } else {
-                monitor.warning("Failed to send suspend command for transfer " + transferId);
-                return StatusResult.failure(ResponseStatus.ERROR_RETRY, 
-                    "Failed to send suspend command to client");
-            }
-        }
-        
-        return StatusResult.success();
+        return stopPushingToMqttBroker(transferProcess, buildSuspendCommand(transferProcess.getId()), false, "suspend");
     }
 
     @Override
     @NotNull
     public StatusResult<Void> terminateTransfer(@NotNull TransferProcess transferProcess) {
-        String transferId = transferProcess.getId();
-        String clientId = activeTransfers.remove(transferId);
-        
-        if (clientId != null) {
-            // Send termination command to the client
-            String terminateCommand = buildTerminateCommand(transferId);
-            boolean sent = webSocketService.sendToClient(clientId, terminateCommand);
-            
-            if (sent) {
-                monitor.info("Sent terminate command for transfer " + transferId + " to client " + clientId);
-            } else {
-                monitor.warning("Failed to send terminate command for transfer " + transferId);
-            }
-        }
-        
-        monitor.info("Removed transfer " + transferId + " from active transfers");
-        return StatusResult.success();
+        return stopPushingToMqttBroker(transferProcess, buildTerminateCommand(transferProcess.getId()), true, "terminate");
     }
 
     @Override
@@ -346,6 +312,41 @@ public class IndustrialConnectorWssTransferFlowImpl implements TransferFlowServi
         }
 
         return null;
+    }
+
+    private StatusResult<Void> stopPushingToMqttBroker(@NotNull TransferProcess transferProcess,
+                                                       @NotNull String command,
+                                                       boolean removeTransfer,
+                                                       @NotNull String operation) {
+        String transferId = transferProcess.getId();
+        String clientId = removeTransfer ? activeTransfers.remove(transferId) : activeTransfers.get(transferId);
+
+        if (clientId != null && webSocketService.hasSession(clientId)) {
+            boolean sent = webSocketService.sendToClient(clientId, command);
+            if (sent) {
+                monitor.info("Sent " + operation + " command for transfer " + transferId + " to client " + clientId + " to stop MQTT pushing");
+                if (removeTransfer) {
+                    monitor.info("Removed transfer " + transferId + " from active transfers");
+                }
+                return StatusResult.success();
+            }
+
+            monitor.warning("Failed to send " + operation + " command for transfer " + transferId + " to client " + clientId);
+            return StatusResult.failure(ResponseStatus.ERROR_RETRY, "Failed to send " + operation + " command to client");
+        }
+
+        if (webSocketService.getActiveSessionCount() > 0) {
+            webSocketService.broadcast(command);
+            monitor.info("Broadcast " + operation + " command for transfer " + transferId + " to stop MQTT pushing");
+            if (removeTransfer) {
+                monitor.info("Removed transfer " + transferId + " from active transfers");
+            }
+            return StatusResult.success();
+        }
+
+        monitor.warning("No active WebSocket client available to " + operation + " transfer " + transferId + " and stop MQTT pushing");
+        return StatusResult.failure(ResponseStatus.ERROR_RETRY,
+                "No active WebSocket client available to " + operation + " transfer " + transferId);
     }
 
     /**
